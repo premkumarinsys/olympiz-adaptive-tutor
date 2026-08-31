@@ -10,18 +10,25 @@ grading, safety, and memory remain deterministic.
 From `backend/`:
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-uvicorn app.main:app --host 127.0.0.1 --port 8000
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
+
+Use `py -3.12` and the explicit `.\.venv\Scripts\python.exe` path rather than a
+bare `python` or shell activation. Bare `python` can resolve to a different
+interpreter than the venv was built against, and re-running `python -m venv .venv`
+over an existing environment replaces the interpreter but keeps the old
+`site-packages`, leaving compiled wheels that no longer match. That surfaces as
+`ModuleNotFoundError: No module named 'pydantic_core._pydantic_core'`; the fix is
+to delete `.venv` and recreate it.
 
 Interactive API documentation is available at `http://127.0.0.1:8000/docs`.
 
 ## Verify
 
 ```powershell
-python scripts\run_evaluation.py
+.\.venv\Scripts\python.exe scripts\run_evaluation.py
 ```
 
 The reviewer gate intentionally uses this one golden evaluation rather than a
@@ -53,7 +60,7 @@ configurable with `OPENAI_MODEL`; the default is `gpt-5-mini`.
 ```powershell
 $env:OPENAI_API_KEY = "..."
 $env:OPENAI_MODEL = "gpt-5-mini"
-uvicorn app.main:app --host 127.0.0.1 --port 8000
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
 The adapter makes at most one Responses API call for a rendered plan, uses a

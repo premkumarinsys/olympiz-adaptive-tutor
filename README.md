@@ -12,10 +12,18 @@ Backend:
 
 ```powershell
 cd D:\olympiz-adaptive-tutor\backend
-python -m venv .venv
+py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
+
+Create the environment with `py -3.12`, not bare `python`. A bare `python` may
+resolve to a different interpreter than the one already on the machine, and
+re-running `python -m venv .venv` over an existing `.venv` swaps the interpreter
+while leaving the previously installed packages in place. The result is a venv
+whose compiled wheels no longer match its Python, which fails at import with
+`ModuleNotFoundError: No module named 'pydantic_core._pydantic_core'`. If that
+happens, delete `.venv` and recreate it with the command above.
 
 Frontend:
 

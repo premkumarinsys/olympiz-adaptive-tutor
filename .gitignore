@@ -8,6 +8,16 @@ dist/
 .codex-logs/
 .idea/
 tmp/
+logs/
+
+# Agent and local tooling state
+.claude/
+.codegraph/
+
+# .openai is local tooling state, except hosting.json, which is a required input
+# for `npm run build` (see scripts/prepare-sites-build.mjs) and stays tracked.
+.openai/*
+!.openai/hosting.json
 
 backend/.venv/
 backend/.pip-cache/

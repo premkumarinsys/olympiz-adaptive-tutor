@@ -45,7 +45,7 @@ import {
   useNavigate,
   useParams,
 } from "react-router-dom";
-import { api, ApiError } from "./api";
+import { api, ApiError, toResponseKind } from "./api";
 import {
   confidenceChoices,
   defaultPlacement,
@@ -67,6 +67,9 @@ import type {
   StartSessionResponse,
   TurnResponse,
 } from "./types";
+
+/** Matches the elapsed_ms ceiling on TurnRequest in backend/app/api/schemas.py. */
+const MAX_ELAPSED_MS = 3_600_000;
 
 type RouteState = {
   session?: StartSessionResponse;
@@ -271,11 +274,11 @@ function Day0SetupPage() {
           <label>
             Exam goal
             <select value={goal} onChange={(event) => setGoal(event.target.value)}>
-              <option>NEET</option>
-              <option>JEE Main</option>
-              <option>JEE Advanced</option>
-              <option>Olympiad</option>
-              <option>Exploring</option>
+              <option value="NEET">NEET</option>
+              <option value="JEE Main">JEE Main</option>
+              <option value="JEE Advanced">JEE Advanced</option>
+              <option value="olympiad">Olympiad</option>
+              <option value="exploring">Exploring</option>
             </select>
           </label>
           <label>
@@ -586,9 +589,9 @@ function LessonWorkspace({
       const result = await api.submitTurn(sessionId, {
         client_turn_id: pendingTurnId.current,
         activity_id: current.activity_id,
-        response: { kind: current.kind === "multiple_choice" ? "choice" : current.kind, value: answer },
+        response: { kind: toResponseKind(current.kind), value: answer },
         confidence,
-        elapsed_ms: Math.round(performance.now() - startedAt.current),
+        elapsed_ms: Math.min(Math.round(performance.now() - startedAt.current), MAX_ELAPSED_MS),
         requested_hint_ids: counterexample ? ["counterexample_01"] : [],
       }, demoActivities);
       pendingTurnId.current = null;

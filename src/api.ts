@@ -3,6 +3,7 @@ import type {
   Activity,
   CompareResponse,
   EvaluationResponse,
+  LearnerResponseKind,
   MockLearner,
   ReviewerTrace,
   StartSessionResponse,
@@ -27,10 +28,31 @@ const readable = (value: unknown) =>
     .replaceAll("_", " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 
+// The two kind vocabularies are not the same size: the API speaks choice/numeric/text
+// plus content for non-response blocks, the UI speaks five presentation kinds. Both maps
+// are total so an unrecognised kind degrades to free text instead of reaching the API raw.
+const ACTIVITY_KIND_FROM_API: Record<string, Activity["kind"]> = {
+  choice: "multiple_choice",
+  numeric: "numeric",
+  text: "short_text",
+  content: "short_text",
+};
+
+const RESPONSE_KIND_FOR_ACTIVITY: Record<Activity["kind"], LearnerResponseKind> = {
+  multiple_choice: "choice",
+  numeric: "numeric",
+  short_text: "text",
+  explanation: "text",
+  reflection: "text",
+};
+
+export function toResponseKind(kind: Activity["kind"]): LearnerResponseKind {
+  return RESPONSE_KIND_FOR_ACTIVITY[kind] ?? "text";
+}
+
 function normalizeActivity(activity: BackendActivity | null | undefined): Activity | null {
   if (!activity) return null;
-  const kind = activity.kind === "choice" ? "multiple_choice" : activity.kind === "text" ? "short_text" : activity.kind;
-  return { ...activity, kind: kind as Activity["kind"] };
+  return { ...activity, kind: ACTIVITY_KIND_FROM_API[activity.kind] ?? "short_text" };
 }
 
 function fixtureToLearner(fixture: BackendFixture): MockLearner {

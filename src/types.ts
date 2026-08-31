@@ -9,6 +9,9 @@ export type Outcome =
 
 export type ConfidenceValue = 0.2 | 0.45 | 0.7 | 0.95;
 
+/** Mirrors LearnerResponse.kind in backend/app/api/schemas.py. */
+export type LearnerResponseKind = "choice" | "numeric" | "text";
+
 export interface ActivityOption {
   id: string;
   label: string;
