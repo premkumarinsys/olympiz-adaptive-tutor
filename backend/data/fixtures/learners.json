@@ -1,0 +1,160 @@
+[
+  {
+    "fixture_id": "asha",
+    "display_name": "Asha",
+    "scenario": "Needs prerequisite repair and repeatedly benefits from smaller chunks.",
+    "default_topic_id": "newton_second_law",
+    "expected_base_mode": "foundation_first",
+    "expected_modifiers": ["small_chunks"],
+    "events": [
+      {"event_type":"session_started","event_id":"asha_s1_start","learner_id":"asha","session_id":"asha_s1","occurred_at":"2026-08-01T09:00:00Z","idempotency_key":"asha_s1_start","mode":"dayn","topic_id":"newton_second_law","exam_goal":"JEE Main"},
+      {"event_type":"response_graded","event_id":"asha_nf_1","learner_id":"asha","session_id":"asha_s1","occurred_at":"2026-08-01T09:01:00Z","idempotency_key":"asha_nf_1","turn_id":"t1","concept_id":"net_force","content_id":"vector_anchor_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":0,"final_score":0,"confidence_before_answer":0.75,"support_used":"none","error_tags":["adds_forces_as_scalars"],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"asha_nf_2","learner_id":"asha","session_id":"asha_s1","occurred_at":"2026-08-01T09:02:00Z","idempotency_key":"asha_nf_2","turn_id":"t2","concept_id":"net_force","content_id":"net_force_anchor_02","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":0,"final_score":0.5,"confidence_before_answer":0.5,"support_used":"one_hint","error_tags":["adds_forces_as_scalars"],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"asha_nf_3","learner_id":"asha","session_id":"asha_s1","occurred_at":"2026-08-01T09:02:20Z","idempotency_key":"asha_nf_3","turn_id":"t2b","concept_id":"net_force","content_id":"n2l_micro_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":0,"final_score":0,"confidence_before_answer":0.5,"support_used":"none","error_tags":["adds_forces_as_scalars"],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"asha_nf_4","learner_id":"asha","session_id":"asha_s1","occurred_at":"2026-08-01T09:02:40Z","idempotency_key":"asha_nf_4","turn_id":"t2c","concept_id":"net_force","content_id":"n2l_recap_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":0,"final_score":0,"confidence_before_answer":0.5,"support_used":"none","error_tags":["adds_forces_as_scalars"],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"asha_n2l_1","learner_id":"asha","session_id":"asha_s1","occurred_at":"2026-08-01T09:03:00Z","idempotency_key":"asha_n2l_1","turn_id":"t3","concept_id":"newton_second_law","content_id":"n2l_target_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":0,"final_score":1,"confidence_before_answer":0.5,"support_used":"one_hint","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"interaction_signal","event_id":"asha_load_1","learner_id":"asha","session_id":"asha_s1","occurred_at":"2026-08-01T09:04:00Z","idempotency_key":"asha_load_1","signal_type":"load","value":0.8},
+      {"event_type":"interaction_signal","event_id":"asha_load_2","learner_id":"asha","session_id":"asha_s1","occurred_at":"2026-08-01T09:05:00Z","idempotency_key":"asha_load_2","signal_type":"load","value":0.6},
+      {"event_type":"session_completed","event_id":"asha_s1_done","learner_id":"asha","session_id":"asha_s1","occurred_at":"2026-08-01T09:06:00Z","idempotency_key":"asha_s1_done"},
+      {"event_type":"session_started","event_id":"asha_s2_start","learner_id":"asha","session_id":"asha_s2","occurred_at":"2026-08-10T09:00:00Z","idempotency_key":"asha_s2_start","mode":"dayn","topic_id":"newton_second_law","exam_goal":"JEE Main"},
+      {"event_type":"response_graded","event_id":"asha_n2l_2","learner_id":"asha","session_id":"asha_s2","occurred_at":"2026-08-10T09:01:00Z","idempotency_key":"asha_n2l_2","turn_id":"t4","concept_id":"newton_second_law","content_id":"n2l_recovery_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":0.5,"final_score":1,"confidence_before_answer":0.5,"support_used":"two_hints","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"interaction_signal","event_id":"asha_load_3","learner_id":"asha","session_id":"asha_s2","occurred_at":"2026-08-10T09:02:00Z","idempotency_key":"asha_load_3","signal_type":"load","value":0.5},
+      {"event_type":"interaction_signal","event_id":"asha_load_4","learner_id":"asha","session_id":"asha_s2","occurred_at":"2026-08-10T09:03:00Z","idempotency_key":"asha_load_4","signal_type":"load","value":0.7},
+      {"event_type":"session_completed","event_id":"asha_s2_done","learner_id":"asha","session_id":"asha_s2","occurred_at":"2026-08-10T09:04:00Z","idempotency_key":"asha_s2_done"}
+    ]
+  },
+  {
+    "fixture_id": "rohan",
+    "display_name": "Rohan",
+    "scenario": "Benefits from worked examples and fading hints.",
+    "default_topic_id": "newton_second_law",
+    "expected_base_mode": "guided_solver",
+    "events": [
+      {"event_type":"session_started","event_id":"rohan_s1_start","learner_id":"rohan","session_id":"rohan_s1","occurred_at":"2026-08-02T09:00:00Z","idempotency_key":"rohan_s1_start","mode":"dayn","topic_id":"newton_second_law","exam_goal":"JEE Main"},
+      {"event_type":"response_graded","event_id":"rohan_1","learner_id":"rohan","session_id":"rohan_s1","occurred_at":"2026-08-02T09:01:00Z","idempotency_key":"rohan_1","turn_id":"t1","concept_id":"newton_second_law","content_id":"n2l_target_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":0.5,"final_score":1,"confidence_before_answer":0.5,"support_used":"one_hint","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"rohan_2","learner_id":"rohan","session_id":"rohan_s1","occurred_at":"2026-08-02T09:02:00Z","idempotency_key":"rohan_2","turn_id":"t2","concept_id":"newton_second_law","content_id":"n2l_recovery_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.75,"support_used":"one_hint","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"session_completed","event_id":"rohan_s1_done","learner_id":"rohan","session_id":"rohan_s1","occurred_at":"2026-08-02T09:03:00Z","idempotency_key":"rohan_s1_done"},
+      {"event_type":"session_started","event_id":"rohan_s2_start","learner_id":"rohan","session_id":"rohan_s2","occurred_at":"2026-08-12T09:00:00Z","idempotency_key":"rohan_s2_start","mode":"dayn","topic_id":"newton_second_law","exam_goal":"JEE Main"},
+      {"event_type":"response_graded","event_id":"rohan_3","learner_id":"rohan","session_id":"rohan_s2","occurred_at":"2026-08-12T09:01:00Z","idempotency_key":"rohan_3","turn_id":"t3","concept_id":"newton_second_law","content_id":"rep_text_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":0,"final_score":1,"confidence_before_answer":0.5,"support_used":"two_hints","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"rohan_4","learner_id":"rohan","session_id":"rohan_s2","occurred_at":"2026-08-12T09:02:00Z","idempotency_key":"rohan_4","turn_id":"t4","concept_id":"newton_second_law","content_id":"rep_diagram_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.75,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"session_completed","event_id":"rohan_s2_done","learner_id":"rohan","session_id":"rohan_s2","occurred_at":"2026-08-12T09:03:00Z","idempotency_key":"rohan_s2_done"}
+    ]
+  },
+  {
+    "fixture_id": "meera",
+    "display_name": "Meera",
+    "scenario": "Consistently succeeds independently and is ready for transfer challenges.",
+    "default_topic_id": "newton_second_law",
+    "expected_base_mode": "independent_challenger",
+    "expected_modifiers": ["compact"],
+    "events": [
+      {"event_type":"session_started","event_id":"meera_s1_start","learner_id":"meera","session_id":"meera_s1","occurred_at":"2026-08-03T09:00:00Z","idempotency_key":"meera_s1_start","mode":"dayn","topic_id":"newton_second_law","exam_goal":"JEE Main"},
+      {"event_type":"response_graded","event_id":"meera_1","learner_id":"meera","session_id":"meera_s1","occurred_at":"2026-08-03T09:01:00Z","idempotency_key":"meera_1","turn_id":"t1","concept_id":"newton_second_law","content_id":"n2l_target_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.75,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"meera_2","learner_id":"meera","session_id":"meera_s1","occurred_at":"2026-08-03T09:02:00Z","idempotency_key":"meera_2","turn_id":"t2","concept_id":"newton_second_law","content_id":"n2l_recovery_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.75,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"meera_3","learner_id":"meera","session_id":"meera_s1","occurred_at":"2026-08-03T09:03:00Z","idempotency_key":"meera_3","turn_id":"t3","concept_id":"newton_second_law","content_id":"rep_text_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.75,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"meera_3b","learner_id":"meera","session_id":"meera_s1","occurred_at":"2026-08-03T09:03:30Z","idempotency_key":"meera_3b","turn_id":"t3b","concept_id":"newton_second_law","content_id":"n2l_anchor_03","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.75,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"session_completed","event_id":"meera_s1_done","learner_id":"meera","session_id":"meera_s1","occurred_at":"2026-08-03T09:04:00Z","idempotency_key":"meera_s1_done"},
+      {"event_type":"session_started","event_id":"meera_s2_start","learner_id":"meera","session_id":"meera_s2","occurred_at":"2026-08-15T09:00:00Z","idempotency_key":"meera_s2_start","mode":"dayn","topic_id":"newton_second_law","exam_goal":"JEE Main"},
+      {"event_type":"response_graded","event_id":"meera_4","learner_id":"meera","session_id":"meera_s2","occurred_at":"2026-08-15T09:01:00Z","idempotency_key":"meera_4","turn_id":"t4","concept_id":"newton_second_law","content_id":"rep_diagram_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.75,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"meera_5","learner_id":"meera","session_id":"meera_s2","occurred_at":"2026-08-15T09:02:00Z","idempotency_key":"meera_5","turn_id":"t5","concept_id":"newton_second_law","content_id":"n2l_transfer_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.75,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"meera_6","learner_id":"meera","session_id":"meera_s2","occurred_at":"2026-08-15T09:03:00Z","idempotency_key":"meera_6","turn_id":"t6","concept_id":"newton_second_law","content_id":"n2l_extension_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.75,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"meera_7","learner_id":"meera","session_id":"meera_s2","occurred_at":"2026-08-15T09:03:30Z","idempotency_key":"meera_7","turn_id":"t7","concept_id":"newton_second_law","content_id":"n2l_anchor_03","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.75,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"meera_8","learner_id":"meera","session_id":"meera_s2","occurred_at":"2026-08-15T09:03:40Z","idempotency_key":"meera_8","turn_id":"t8","concept_id":"newton_second_law","content_id":"n2l_target_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.75,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"meera_9","learner_id":"meera","session_id":"meera_s2","occurred_at":"2026-08-15T09:03:50Z","idempotency_key":"meera_9","turn_id":"t9","concept_id":"newton_second_law","content_id":"n2l_recovery_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.75,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"session_completed","event_id":"meera_s2_done","learner_id":"meera","session_id":"meera_s2","occurred_at":"2026-08-15T09:04:00Z","idempotency_key":"meera_s2_done"}
+    ]
+  },
+  {
+    "fixture_id": "kabir",
+    "display_name": "Kabir",
+    "scenario": "Shows a repeated force-and-motion misconception and overconfidence.",
+    "default_topic_id": "newton_second_law",
+    "expected_base_mode": "guided_solver",
+    "expected_modifiers": ["misconception_probe:force_required_for_motion", "confidence_check_over"],
+    "events": [
+      {"event_type":"session_started","event_id":"kabir_s1_start","learner_id":"kabir","session_id":"kabir_s1","occurred_at":"2026-08-04T09:00:00Z","idempotency_key":"kabir_s1_start","mode":"dayn","topic_id":"newton_second_law","exam_goal":"JEE Main"},
+      {"event_type":"response_graded","event_id":"kabir_1","learner_id":"kabir","session_id":"kabir_s1","occurred_at":"2026-08-04T09:01:00Z","idempotency_key":"kabir_1","turn_id":"t1","concept_id":"newton_second_law","content_id":"n2l_target_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":0,"final_score":0,"confidence_before_answer":1,"support_used":"none","error_tags":["force_required_for_motion"],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"kabir_2","learner_id":"kabir","session_id":"kabir_s1","occurred_at":"2026-08-04T09:02:00Z","idempotency_key":"kabir_2","turn_id":"t2","concept_id":"newton_second_law","content_id":"n2l_recovery_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":0,"final_score":1,"confidence_before_answer":1,"support_used":"one_hint","error_tags":["force_required_for_motion"],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"kabir_3","learner_id":"kabir","session_id":"kabir_s1","occurred_at":"2026-08-04T09:03:00Z","idempotency_key":"kabir_3","turn_id":"t3","concept_id":"newton_second_law","content_id":"rep_text_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":0,"final_score":0,"confidence_before_answer":0.75,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"session_completed","event_id":"kabir_s1_done","learner_id":"kabir","session_id":"kabir_s1","occurred_at":"2026-08-04T09:04:00Z","idempotency_key":"kabir_s1_done"},
+      {"event_type":"session_started","event_id":"kabir_s2_start","learner_id":"kabir","session_id":"kabir_s2","occurred_at":"2026-08-16T09:00:00Z","idempotency_key":"kabir_s2_start","mode":"dayn","topic_id":"newton_second_law","exam_goal":"JEE Main"},
+      {"event_type":"response_graded","event_id":"kabir_4","learner_id":"kabir","session_id":"kabir_s2","occurred_at":"2026-08-16T09:01:00Z","idempotency_key":"kabir_4","turn_id":"t4","concept_id":"newton_second_law","content_id":"rep_diagram_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":0,"final_score":0,"confidence_before_answer":1,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"kabir_5","learner_id":"kabir","session_id":"kabir_s2","occurred_at":"2026-08-16T09:02:00Z","idempotency_key":"kabir_5","turn_id":"t5","concept_id":"newton_second_law","content_id":"n2l_transfer_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":1,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"kabir_6","learner_id":"kabir","session_id":"kabir_s2","occurred_at":"2026-08-16T09:03:00Z","idempotency_key":"kabir_6","turn_id":"t6","concept_id":"newton_second_law","content_id":"n2l_extension_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":0,"final_score":0,"confidence_before_answer":0.75,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"session_completed","event_id":"kabir_s2_done","learner_id":"kabir","session_id":"kabir_s2","occurred_at":"2026-08-16T09:04:00Z","idempotency_key":"kabir_s2_done"}
+    ]
+  },
+  {
+    "fixture_id": "tara",
+    "display_name": "Tara",
+    "scenario": "Succeeds independently but consistently underestimates her answers.",
+    "default_topic_id": "newton_second_law",
+    "expected_base_mode": "independent_challenger",
+    "expected_modifiers": ["compact", "confidence_check_under"],
+    "events": [
+      {"event_type":"session_started","event_id":"tara_s1_start","learner_id":"tara","session_id":"tara_s1","occurred_at":"2026-08-05T09:00:00Z","idempotency_key":"tara_s1_start","mode":"dayn","topic_id":"newton_second_law","exam_goal":"JEE Main"},
+      {"event_type":"response_graded","event_id":"tara_1","learner_id":"tara","session_id":"tara_s1","occurred_at":"2026-08-05T09:01:00Z","idempotency_key":"tara_1","turn_id":"t1","concept_id":"newton_second_law","content_id":"n2l_target_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.25,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"tara_2","learner_id":"tara","session_id":"tara_s1","occurred_at":"2026-08-05T09:02:00Z","idempotency_key":"tara_2","turn_id":"t2","concept_id":"newton_second_law","content_id":"n2l_recovery_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.25,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"tara_3","learner_id":"tara","session_id":"tara_s1","occurred_at":"2026-08-05T09:03:00Z","idempotency_key":"tara_3","turn_id":"t3","concept_id":"newton_second_law","content_id":"rep_text_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.25,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"tara_3b","learner_id":"tara","session_id":"tara_s1","occurred_at":"2026-08-05T09:03:30Z","idempotency_key":"tara_3b","turn_id":"t3b","concept_id":"newton_second_law","content_id":"n2l_anchor_03","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.25,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"session_completed","event_id":"tara_s1_done","learner_id":"tara","session_id":"tara_s1","occurred_at":"2026-08-05T09:04:00Z","idempotency_key":"tara_s1_done"},
+      {"event_type":"session_started","event_id":"tara_s2_start","learner_id":"tara","session_id":"tara_s2","occurred_at":"2026-08-17T09:00:00Z","idempotency_key":"tara_s2_start","mode":"dayn","topic_id":"newton_second_law","exam_goal":"JEE Main"},
+      {"event_type":"response_graded","event_id":"tara_4","learner_id":"tara","session_id":"tara_s2","occurred_at":"2026-08-17T09:01:00Z","idempotency_key":"tara_4","turn_id":"t4","concept_id":"newton_second_law","content_id":"rep_diagram_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.25,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"tara_5","learner_id":"tara","session_id":"tara_s2","occurred_at":"2026-08-17T09:02:00Z","idempotency_key":"tara_5","turn_id":"t5","concept_id":"newton_second_law","content_id":"n2l_transfer_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.25,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"tara_6","learner_id":"tara","session_id":"tara_s2","occurred_at":"2026-08-17T09:03:00Z","idempotency_key":"tara_6","turn_id":"t6","concept_id":"newton_second_law","content_id":"n2l_extension_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.25,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"tara_7","learner_id":"tara","session_id":"tara_s2","occurred_at":"2026-08-17T09:03:30Z","idempotency_key":"tara_7","turn_id":"t7","concept_id":"newton_second_law","content_id":"n2l_anchor_03","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.25,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"tara_8","learner_id":"tara","session_id":"tara_s2","occurred_at":"2026-08-17T09:03:40Z","idempotency_key":"tara_8","turn_id":"t8","concept_id":"newton_second_law","content_id":"n2l_target_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.25,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"tara_9","learner_id":"tara","session_id":"tara_s2","occurred_at":"2026-08-17T09:03:50Z","idempotency_key":"tara_9","turn_id":"t9","concept_id":"newton_second_law","content_id":"n2l_recovery_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.25,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"session_completed","event_id":"tara_s2_done","learner_id":"tara","session_id":"tara_s2","occurred_at":"2026-08-17T09:04:00Z","idempotency_key":"tara_s2_done"}
+    ]
+  },
+  {
+    "fixture_id": "zoya",
+    "display_name": "Zoya",
+    "scenario": "Matched tasks repeatedly show better response to approved diagrams.",
+    "default_topic_id": "newton_second_law",
+    "expected_base_mode": "guided_solver",
+    "expected_modifiers": ["representation:diagram_supported"],
+    "events": [
+      {"event_type":"session_started","event_id":"zoya_s1_start","learner_id":"zoya","session_id":"zoya_s1","occurred_at":"2026-08-06T09:00:00Z","idempotency_key":"zoya_s1_start","mode":"dayn","topic_id":"newton_second_law","exam_goal":"JEE Main"},
+      {"event_type":"response_graded","event_id":"zoya_1","learner_id":"zoya","session_id":"zoya_s1","occurred_at":"2026-08-06T09:01:00Z","idempotency_key":"zoya_1","turn_id":"t1","concept_id":"newton_second_law","content_id":"n2l_target_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.75,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"zoya_2","learner_id":"zoya","session_id":"zoya_s1","occurred_at":"2026-08-06T09:02:00Z","idempotency_key":"zoya_2","turn_id":"t2","concept_id":"newton_second_law","content_id":"n2l_recovery_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":0,"final_score":1,"confidence_before_answer":0.5,"support_used":"one_hint","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"interaction_signal","event_id":"zoya_rep_1","learner_id":"zoya","session_id":"zoya_s1","occurred_at":"2026-08-06T09:03:00Z","idempotency_key":"zoya_rep_1","signal_type":"representation_pair","value":0.25,"pair_id":"zp1","representation":"diagram_supported"},
+      {"event_type":"interaction_signal","event_id":"zoya_rep_2","learner_id":"zoya","session_id":"zoya_s1","occurred_at":"2026-08-06T09:04:00Z","idempotency_key":"zoya_rep_2","signal_type":"representation_pair","value":0.2,"pair_id":"zp2","representation":"diagram_supported"},
+      {"event_type":"session_completed","event_id":"zoya_s1_done","learner_id":"zoya","session_id":"zoya_s1","occurred_at":"2026-08-06T09:05:00Z","idempotency_key":"zoya_s1_done"},
+      {"event_type":"session_started","event_id":"zoya_s2_start","learner_id":"zoya","session_id":"zoya_s2","occurred_at":"2026-08-18T09:00:00Z","idempotency_key":"zoya_s2_start","mode":"dayn","topic_id":"newton_second_law","exam_goal":"JEE Main"},
+      {"event_type":"response_graded","event_id":"zoya_3","learner_id":"zoya","session_id":"zoya_s2","occurred_at":"2026-08-18T09:01:00Z","idempotency_key":"zoya_3","turn_id":"t3","concept_id":"newton_second_law","content_id":"rep_text_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":0,"final_score":0,"confidence_before_answer":0.5,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"zoya_4","learner_id":"zoya","session_id":"zoya_s2","occurred_at":"2026-08-18T09:02:00Z","idempotency_key":"zoya_4","turn_id":"t4","concept_id":"newton_second_law","content_id":"rep_diagram_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.75,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"interaction_signal","event_id":"zoya_rep_3","learner_id":"zoya","session_id":"zoya_s2","occurred_at":"2026-08-18T09:03:00Z","idempotency_key":"zoya_rep_3","signal_type":"representation_pair","value":0.3,"pair_id":"zp3","representation":"diagram_supported"},
+      {"event_type":"interaction_signal","event_id":"zoya_rep_4","learner_id":"zoya","session_id":"zoya_s2","occurred_at":"2026-08-18T09:04:00Z","idempotency_key":"zoya_rep_4","signal_type":"representation_pair","value":0.2,"pair_id":"zp4","representation":"diagram_supported"},
+      {"event_type":"session_completed","event_id":"zoya_s2_done","learner_id":"zoya","session_id":"zoya_s2","occurred_at":"2026-08-18T09:05:00Z","idempotency_key":"zoya_s2_done"}
+    ]
+  },
+  {
+    "fixture_id": "dev",
+    "display_name": "Dev",
+    "scenario": "A disrupted session produces a provisional balanced plan instead of a durable transition.",
+    "default_topic_id": "newton_second_law",
+    "expected_base_mode": "guided_solver",
+    "expected_modifiers": ["balanced"],
+    "events": [
+      {"event_type":"session_started","event_id":"dev_s1_start","learner_id":"dev","session_id":"dev_s1","occurred_at":"2026-08-20T09:00:00Z","idempotency_key":"dev_s1_start","mode":"dayn","topic_id":"newton_second_law","exam_goal":"JEE Main"},
+      {"event_type":"response_graded","event_id":"dev_1","learner_id":"dev","session_id":"dev_s1","occurred_at":"2026-08-20T09:01:00Z","idempotency_key":"dev_1","turn_id":"t1","concept_id":"newton_second_law","content_id":"n2l_target_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":0,"final_score":0,"confidence_before_answer":0.5,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":["interrupted"]},
+      {"event_type":"response_graded","event_id":"dev_2","learner_id":"dev","session_id":"dev_s1","occurred_at":"2026-08-20T09:02:00Z","idempotency_key":"dev_2","turn_id":"t2","concept_id":"newton_second_law","content_id":"n2l_recovery_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":0,"final_score":0,"confidence_before_answer":0.5,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":["timed_out"]},
+      {"event_type":"response_graded","event_id":"dev_3","learner_id":"dev","session_id":"dev_s1","occurred_at":"2026-08-20T09:03:00Z","idempotency_key":"dev_3","turn_id":"t3","concept_id":"newton_second_law","content_id":"rep_text_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.75,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"response_graded","event_id":"dev_4","learner_id":"dev","session_id":"dev_s1","occurred_at":"2026-08-20T09:04:00Z","idempotency_key":"dev_4","turn_id":"t4","concept_id":"newton_second_law","content_id":"rep_diagram_01","content_version":"1.0","difficulty_relation":"on_level","first_attempt_score":1,"final_score":1,"confidence_before_answer":0.75,"support_used":"none","error_tags":[],"grader_confidence":1,"quality_flags":[]},
+      {"event_type":"session_completed","event_id":"dev_s1_done","learner_id":"dev","session_id":"dev_s1","occurred_at":"2026-08-20T09:05:00Z","idempotency_key":"dev_s1_done","noisy":true}
+    ]
+  },
+  {
+    "fixture_id": "isha",
+    "display_name": "Isha",
+    "scenario": "Requests a topic outside the pinned verified catalog.",
+    "default_topic_id": "rotational_dynamics",
+    "expected_base_mode": "guided_solver",
+    "expected_modifiers": ["balanced"],
+    "events": [
+      {"event_type":"session_started","event_id":"isha_s1_start","learner_id":"isha","session_id":"isha_s1","occurred_at":"2026-08-21T09:00:00Z","idempotency_key":"isha_s1_start","mode":"dayn","topic_id":"rotational_dynamics","exam_goal":"JEE Main"}
+    ]
+  }
+]

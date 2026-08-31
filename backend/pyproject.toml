@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "olympiz-adaptive-tutor-backend"
+version = "0.1.0"
+description = "Deterministic adaptive tutoring backend for the Olympiz work trial"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "langgraph>=0.2,<2",
+  "openai>=1.55,<3",
+  "pydantic>=2.8,<3",
+  "pydantic-settings>=2.4,<3",
+  "uvicorn[standard]>=0.30,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8,<9",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
