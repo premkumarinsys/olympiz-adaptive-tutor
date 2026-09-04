@@ -221,7 +221,11 @@ export const api = {
     );
   },
 
-  startDayN(input: { memory_fixture_id: string; memory_bundle: null; topic_id: string; session_goal: string }): Promise<StartSessionResponse> {
+  getSession(sessionId: string): Promise<{ session: { learner_id: string } }> {
+    return request<{ session: { learner_id: string } }>(`/api/v1/sessions/${encodeURIComponent(sessionId)}`);
+  },
+
+  startDayN(input: { memory_fixture_id?: string; memory_bundle?: null; learner_id?: string; topic_id: string; session_goal: string }): Promise<StartSessionResponse> {
     return withDemoFallback(
       () => request<any>("/api/v1/dayn/sessions", { method: "POST", body: JSON.stringify(input) }).then((raw) => normalizeStartSession(raw, input.memory_fixture_id)),
       () => {

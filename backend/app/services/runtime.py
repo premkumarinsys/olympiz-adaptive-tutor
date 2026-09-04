@@ -10,6 +10,7 @@ from uuid import uuid4
 from pydantic import TypeAdapter
 
 from app.adapters.openai_renderer import SafeRenderer
+from app.adapters.prompt_log import PromptLogStore
 from app.adapters.repository import JsonRepository
 from app.api.schemas import (
     CompareRequest,
@@ -73,11 +74,18 @@ class TutorRuntime:
         fixtures = TypeAdapter(list[LearnerFixture]).validate_python(fixtures_data)
         self.fixtures = {fixture.fixture_id: fixture for fixture in fixtures}
         self.repository = repository or JsonRepository(settings.runtime_dir)
+        self.prompt_log = PromptLogStore(
+            settings.runtime_dir / "prompt_logs" / "llm-calls.jsonl"
+        )
         self.renderer = SafeRenderer(
             api_key=settings.openai_api_key,
             model=settings.openai_model,
             timeout_seconds=settings.openai_timeout_seconds,
             max_output_tokens=settings.openai_max_output_tokens,
+            prompt_log=self.prompt_log,
+            base_url=settings.llm_base_url,
+            live_api_key=settings.llm_api_key,
+            live_model=settings.llm_model,
         )
         self.graph = TutorAgentGraph(self.renderer)
         self.evaluation_graph = TutorAgentGraph(
@@ -294,6 +302,22 @@ class TutorRuntime:
                 "default_topic_id": fixture.default_topic_id,
             }
             as_of = FIXTURE_AS_OF
+        elif request.learner_id:
+            # Continue from memory this learner already wrote, e.g. the first lesson
+            # after a Day 0 placement. The events are already durable, so unlike the
+            # bundle path there is nothing to append.
+            events = self.repository.load_events(request.learner_id)
+            if not events:
+                raise NotFoundError(
+                    "LEARNER_MEMORY_NOT_FOUND", "No learner memory is available."
+                )
+            learner_id = request.learner_id
+            topic_id = request.topic_id or "newton_second_law"
+            summary = {
+                "display_name": learner_id,
+                "scenario": "Continued from this learner's own session history",
+            }
+            as_of = max(event.occurred_at for event in events)
         else:
             assert request.memory_bundle is not None
             events = list(request.memory_bundle.events)

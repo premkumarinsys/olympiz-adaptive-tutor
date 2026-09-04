@@ -694,6 +694,35 @@ function PlacementPage() {
   const state = (location.state ?? {}) as RouteState;
   const placement = state.placement ?? defaultPlacement;
   const [traceOpen, setTraceOpen] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [error, setError] = useState("");
+
+  // Day 0 ends at placement; its diagnostic sequence is spent. The first lesson is a
+  // new Day N session seeded from the memory this learner just wrote.
+  async function beginFirstLesson() {
+    setStarting(true);
+    setError("");
+    try {
+      const { session: record } = await api.getSession(sessionId);
+      const session = await api.startDayN({
+        learner_id: record.learner_id,
+        topic_id: "newton_second_law",
+        session_goal: "practice",
+      });
+      navigate(`/dayn/${session.session_id}/lesson`, {
+        state: {
+          session,
+          learner: session.learner ?? mockLearners[3],
+          activity: session.next_activity ?? undefined,
+          traceId: session.trace_id,
+        } satisfies RouteState,
+      });
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not start the first lesson.");
+    } finally {
+      setStarting(false);
+    }
+  }
 
   return (
     <div className="site-page placement-page">
@@ -711,10 +740,11 @@ function PlacementPage() {
           </section>
           <section className="next-evidence"><Info size={21} /><div><strong>What I’ll watch next</strong><p>{placement.next_evidence_needed}</p></div></section>
           <div className="placement-actions">
-            <button type="button" className="primary-button" onClick={() => navigate(`/day0/${sessionId}/lesson`, { state: { learner: mockLearners[3], activity: guidedActivity, traceId: state.traceId } satisfies RouteState })}>Begin first lesson<ArrowRight size={20} /></button>
+            <button type="button" className="primary-button" onClick={beginFirstLesson} disabled={starting}>{starting ? <CircleNotch className="spin" size={20} /> : null}{starting ? "Starting first lesson…" : "Begin first lesson"}{starting ? null : <ArrowRight size={20} />}</button>
             <button type="button" className="secondary-button">Change pace or format</button>
             <button type="button" className="text-button" onClick={() => setTraceOpen(true)}>Open decision trace</button>
           </div>
+          {error && <InlineError message={error} />}
         </section>
         <p className="placement-boundary"><ShieldCheck size={18} />We did not infer intelligence, motivation, personality, or a permanent learning style.</p>
       </main>

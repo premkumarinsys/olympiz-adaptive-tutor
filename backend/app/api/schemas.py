@@ -29,13 +29,17 @@ class Day0StartRequest(StrictModel):
 class DayNStartRequest(StrictModel):
     memory_fixture_id: str | None = None
     memory_bundle: MemoryBundle | None = None
+    learner_id: str | None = None
     topic_id: str | None = None
     session_goal: str = "practice"
 
     @model_validator(mode="after")
     def exactly_one_source(self) -> DayNStartRequest:
-        if (self.memory_fixture_id is None) == (self.memory_bundle is None):
-            raise ValueError("provide exactly one of memory_fixture_id or memory_bundle")
+        sources = (self.memory_fixture_id, self.memory_bundle, self.learner_id)
+        if sum(source is not None for source in sources) != 1:
+            raise ValueError(
+                "provide exactly one of memory_fixture_id, memory_bundle, or learner_id"
+            )
         return self
 
 

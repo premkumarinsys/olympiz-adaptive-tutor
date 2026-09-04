@@ -11,7 +11,9 @@ tmp/
 logs/
 
 # Authoring artifacts kept locally, deliberately out of the repo
-docs/
+docs/*
+!docs/prompt-logs/
+!docs/prompt-logs/**
 output/
 
 # Agent and local tooling state
@@ -39,3 +41,4 @@ backend/data/runtime/
 coverage/
 playwright-report/
 test-results/
+.gstack/
