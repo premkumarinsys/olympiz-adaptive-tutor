@@ -405,3 +405,9 @@ label small { color: var(--muted); font-size: 0.82rem; font-weight: 450; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
+
+.reasoning-field { display: grid; gap: 7px; margin: 18px 0 4px; }
+.reasoning-field > span { font-weight: 600; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.reasoning-field > span small { font-weight: 400; opacity: .68; }
+.reasoning-field textarea { width: 100%; padding: 11px 13px; border-radius: 10px; border: 1px solid rgba(0,0,0,.18); font: inherit; resize: vertical; background: #fff; }
+.reasoning-field textarea:disabled { background: rgba(0,0,0,.04); }

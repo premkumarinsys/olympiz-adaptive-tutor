@@ -67,6 +67,8 @@ class TurnRequest(StrictModel):
     confidence: float | None = Field(default=None, ge=0, le=1)
     elapsed_ms: int | None = Field(default=None, ge=0, le=3_600_000)
     requested_hint_ids: tuple[str, ...] = ()
+    reasoning_text: str | None = Field(default=None, max_length=2000)
+    reasoning_prompted: bool = False
 
 
 class MemoryWrite(StrictModel):

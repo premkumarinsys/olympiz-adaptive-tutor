@@ -89,6 +89,32 @@ class ResponseGraded(EventBase):
     pair_id: str | None = None
     representation: str = "balanced"
     support_fraction: float = Field(default=0.0, ge=0, le=1)
+    # True only when the learner was actually offered an explanation field. Events
+    # recorded before that field existed must never be penalised for its absence.
+    reasoning_prompted: bool = False
+
+
+class ReasoningClassified(EventBase):
+    """The learner's own account of their method, mapped to the item's authored tags.
+
+    Separate from ResponseGraded so a misclassification can be corrected with
+    event_superseded without superseding the graded attempt itself.
+    """
+
+    event_type: Literal["reasoning_classified"] = "reasoning_classified"
+    turn_id: str
+    content_id: str
+    content_version: str
+    reasoning_text: str
+    claims_invoked: tuple[str, ...] = ()
+    misconceptions_exhibited: tuple[str, ...] = ()
+    # Vocabulary size at classification time, so coverage replays identically even if
+    # the catalog item later gains or loses claims.
+    claims_available: int = Field(default=0, ge=0)
+    classifier_version: str | None = None
+    classifier_model: str | None = None
+    classifier_confidence: float | None = Field(default=None, ge=0, le=1)
+    outcome: Literal["classified", "unclassified", "classifier_error"] = "classified"
 
 
 class HintRequested(EventBase):
@@ -138,7 +164,7 @@ class EventSuperseded(EventBase):
 
 
 LearnerEvent = Annotated[
-    SessionStarted | ItemPresented | ResponseGraded | HintRequested | InteractionSignal | LearnerPreferenceChanged | SafetyEvent | PolicyApplied | SessionCompleted | EventSuperseded,
+    SessionStarted | ItemPresented | ResponseGraded | ReasoningClassified | HintRequested | InteractionSignal | LearnerPreferenceChanged | SafetyEvent | PolicyApplied | SessionCompleted | EventSuperseded,
     Field(discriminator="event_type"),
 ]
 
@@ -169,6 +195,9 @@ class ConceptState(StrictModel):
     mastery: MasteryEstimate
     scaffolding: ScaffoldingEstimate
     misconceptions: tuple[MisconceptionState, ...] = ()
+    # Wrong answers where the learner's own explanation covered the required claims:
+    # the method is known, the execution failed. Drives teaching, never mastery.
+    computation_slips: int = Field(default=0, ge=0)
 
 
 class CalibrationState(StrictModel):

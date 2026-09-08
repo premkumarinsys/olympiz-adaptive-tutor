@@ -71,6 +71,18 @@ timeout, schema, or validation failures use `TemplateRenderer` automatically.
 The deterministic evaluation always disables the live renderer even when the
 environment contains an API key.
 
+Each renderer decision is appended to `data/runtime/prompt_logs/llm-calls.jsonl`.
+Live calls record the exact bounded request, provider response, validation result,
+duration, and hashes. With no key, the record explicitly says the call was
+skipped and keeps `response` as `null`; no response is fabricated. The logger
+does not write credentials, learner identifiers, or raw learner history.
+
+Generate the checked-in, reproducible application-log bundle with:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\generate_application_logs.py
+```
+
 ## Safety boundary
 
 - The browser never supplies answer keys or rubrics.

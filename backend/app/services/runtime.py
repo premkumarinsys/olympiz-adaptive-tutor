@@ -11,6 +11,7 @@ from pydantic import TypeAdapter
 
 from app.adapters.openai_renderer import SafeRenderer
 from app.adapters.prompt_log import PromptLogStore
+from app.adapters.reasoning_classifier import ReasoningClassifier
 from app.adapters.repository import JsonRepository
 from app.api.schemas import (
     CompareRequest,
@@ -32,6 +33,7 @@ from app.domain.models import (
     LearnerState,
     Outcome,
     Placement,
+    ReasoningClassified,
     ResponseGraded,
     SessionGoal,
     SessionRecord,
@@ -86,6 +88,12 @@ class TutorRuntime:
             base_url=settings.llm_base_url,
             live_api_key=settings.llm_api_key,
             live_model=settings.llm_model,
+        )
+        self.classifier = ReasoningClassifier(
+            api_key=settings.llm_api_key or settings.openai_api_key,
+            base_url=settings.llm_base_url,
+            model=settings.llm_model or settings.openai_model,
+            timeout_seconds=settings.openai_timeout_seconds,
         )
         self.graph = TutorAgentGraph(self.renderer)
         self.evaluation_graph = TutorAgentGraph(
@@ -404,6 +412,49 @@ class TutorRuntime:
             f"{uncertainty} You can change the format at any time."
         )
 
+    def _classify_reasoning(
+        self,
+        session: SessionRecord,
+        item,
+        turn_id: str,
+        request: TurnRequest,
+        now: datetime,
+    ) -> None:
+        """Record the learner's own account of their method.
+
+        Runs after grading and never blocks the turn: every provider or validation
+        failure degrades to a stored classifier_error, which costs the learner nothing.
+        """
+        text = (request.reasoning_text or "").strip()
+        if not text:
+            return
+        claim_ids = tuple(item.claim_ids)
+        result = self.classifier.classify(
+            reasoning_text=text,
+            claim_ids=claim_ids,
+            misconception_tags=tuple(item.misconception_tags),
+        )
+        self.repository.append_event(
+            ReasoningClassified(
+                event_id=self._id("evt"),
+                learner_id=session.learner_id,
+                session_id=session.session_id,
+                occurred_at=now,
+                idempotency_key=f"{session.learner_id}|{session.session_id}|{turn_id}|reasoning",
+                turn_id=turn_id,
+                content_id=item.content_id,
+                content_version=item.version,
+                reasoning_text=text,
+                claims_invoked=result.claims_invoked,
+                misconceptions_exhibited=result.misconceptions_exhibited,
+                claims_available=len(claim_ids),
+                classifier_version=result.classifier_version,
+                classifier_model=result.classifier_model,
+                classifier_confidence=result.confidence,
+                outcome=result.outcome,
+            )
+        )
+
     def submit_turn(self, session_id: str, request: TurnRequest) -> TurnResponse:
         prior = self.repository.load_turn_result(session_id, request.client_turn_id, request)
         if prior:
@@ -469,8 +520,10 @@ class TutorRuntime:
             grader_confidence=grade.grader_confidence,
             representation=item.representation,
             support_fraction=min(1.0, len(request.requested_hint_ids) / 2),
+            reasoning_prompted=request.reasoning_prompted,
         )
         stored, _ = self.repository.append_event(event)
+        self._classify_reasoning(session, item, turn_id, request, now)
         next_index = session.current_index + 1
         build_lesson = session.mode == "day0" and next_index >= len(session.content_sequence)
         graph_result = self.graph.run(
@@ -671,8 +724,25 @@ class TutorRuntime:
             CompareRequest(left_learner_id="asha", right_learner_id="meera")
         )
         distinction = compare.get("structural_difference_count", 0) >= 3
+        # No reasoning tag may ever enter memory outside its item's authored vocabulary.
+        vocabulary_closed = True
+        for fixture in self.fixtures.values():
+            for event in fixture.events:
+                if not isinstance(event, ReasoningClassified):
+                    continue
+                try:
+                    item = self.catalog.get(event.content_id)
+                except Exception:
+                    vocabulary_closed = False
+                    break
+                if not set(event.claims_invoked) <= set(item.claim_ids):
+                    vocabulary_closed = False
+                if not set(event.misconceptions_exhibited) <= set(item.misconception_tags):
+                    vocabulary_closed = False
+
         gates = {
             "verified_claims_only": all_claims,
+            "reasoning_vocabulary_closed": vocabulary_closed,
             "unsupported_content_refuses": refusal_ok,
             "deterministic_plan_hash": deterministic,
             "golden_policies": all_policy,

@@ -131,6 +131,10 @@ def select_policy(
     else:
         modifiers.append("balanced")
 
+    # Known method, failed execution: drill the arithmetic rather than re-teach.
+    if any(concept.computation_slips >= 2 for concept in state.concepts.values()):
+        modifiers.append("computation_slip")
+
     if state.pace.small_chunks:
         modifiers.append("small_chunks")
     elif base == BaseMode.CHALLENGE or state.explicit_preferences.get("pace_preference") == "quick":

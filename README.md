@@ -44,6 +44,8 @@ $env:OPENAI_MODEL = "gpt-5-mini"
 
 Without those variables, the same graph runs with zero model calls and the deterministic renderer.
 
+Renderer decisions are written to `backend/data/runtime/prompt_logs/llm-calls.jsonl`. Live mode records the exact bounded request and validated response; template mode records that the provider call was skipped and why. The logger never stores the API key, learner identity, or raw learner history. A checked-in application-run bundle and integrity hashes are indexed in [`PROMPT_LOGS.md`](PROMPT_LOGS.md).
+
 ## Agent loop
 
 Each session action invokes one typed, non-recursive LangGraph workflow:
@@ -88,6 +90,8 @@ The work-trial gate is intentionally small: one golden evaluation command and on
 - `backend/app/` — FastAPI modular monolith, learner reducer, policy, planner, catalog, grader, safety, and persistence.
 - `backend/data/` — 18 verified mechanics items, eight learner fixtures, and local runtime JSONL.
 - `backend/scripts/run_evaluation.py` — the single reviewer-facing golden evaluation.
+- `backend/scripts/generate_application_logs.py` — runs four representative scenarios and exports actual application prompt/trace logs.
+- `PROMPT_LOGS.md` — index and interpretation guide for the checked-in application log bundle.
 - `backend/tests/unit/` — focused reducer, policy, plan, determinism, and safety unit tests.
 - `docs/01-product-idea-and-solution-architecture.md` — detailed problem framing, product idea, requirements, solution architecture, agent flow, safety, evaluation, roadmap, and presentation narrative.
 - `docs/02-code-files-methods-architecture.md` — engineer onboarding guide covering files, domain models, classes, methods, endpoints, call paths, extension points, debugging, and verification.
