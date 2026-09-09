@@ -76,7 +76,7 @@ npm run build
 npm run test:sites
 ```
 
-The work-trial gate is intentionally small: one golden evaluation command and one frontend production build. Generic API integration testing and lint tooling were removed from the trial scope. Focused reducer and policy unit tests remain available through the optional `dev` dependency.
+The recommended reviewer gate is the focused backend unit suite, golden evaluation, production build, and Sites worker tests shown above. These checks cover the implemented trial contracts without adding a generic integration or linting stack.
 
 ## Reviewer path
 
@@ -104,12 +104,6 @@ The work-trial gate is intentionally small: one golden evaluation command and on
 - `docs/work-trial-latest-features.md` — shareable latest-feature brief, architecture, demo path, evidence, and limitations.
 - `docs/open-chat-tutor.md` — detailed Open Chat design and implementation contract.
 - `backend/tests/unit/` — focused reducer, policy, plan, determinism, and safety unit tests.
-- `docs/01-product-idea-and-solution-architecture.md` — detailed problem framing, product idea, requirements, solution architecture, agent flow, safety, evaluation, roadmap, and presentation narrative.
-- `docs/02-code-files-methods-architecture.md` — engineer onboarding guide covering files, domain models, classes, methods, endpoints, call paths, extension points, debugging, and verification.
-- `output/pdf/Olympiz_Product_Idea_and_Solution_Architecture.pdf` — presentation-ready PDF edition with contents, rendered architecture figures, and page navigation.
-- `output/pdf/Olympiz_Code_Files_and_Methods_Architecture.pdf` — engineer-facing PDF edition with file maps, method tables, execution diagrams, and extension guidance.
-- `docs/solution-design.md` — detailed product, architecture, data, evaluation, failure, and scale design.
-- `docs/architecture-and-presentation-guide.md` — implementation-aligned architecture guide, slide storyboard, demo script, and reviewer Q&A.
 - `references/selected-design.png` — selected Option 3 visual target.
 
 ## Scope and safety

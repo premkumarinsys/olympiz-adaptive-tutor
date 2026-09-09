@@ -29,7 +29,7 @@ The source and rendered desktop screenshots were opened together in one comparis
 - Desktop reload restored Kabir conversation.
 - Mobile has no horizontal overflow; document scroll makes all sections reachable.
 - Browser console checked: no errors or warnings.
-- Build, four Sites packaging tests, 22 backend unit tests and golden policy evaluation passed.
+- Build, four Sites packaging tests, 79 backend unit tests and golden policy evaluation passed.
 
 ## Follow-up polish
 P3: Mobile uses normal document scrolling; a jump-to-composer action could shorten navigation in long conversations.
