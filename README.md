@@ -1,8 +1,10 @@
 # Olympiz adaptive tutor work trial
 
-An end-to-end local prototype for the Meraki Labs / Olympiz AI Engineer work trial. It demonstrates Day 0 cold-start diagnosis, Day N personalization from event-sourced memory, deterministic policy and lesson planning, verified-content retrieval, a bounded LangGraph agent loop, optional LLM-assisted rendering, safe refusal/slowdown, reviewer traces, side-by-side comparison, and a fixed evaluation suite.
+An end-to-end local prototype for the Meraki Labs / Olympiz AI Engineer work trial. It demonstrates Day 0 cold-start diagnosis, Day N personalization from event-sourced memory, a fixed teacher-authored class lesson, an open chat tutor, memory-targeted practice and revision, constrained LLM-generated exercises, deterministic policy and lesson planning, verified-content retrieval, bounded LangGraph workflows, safe refusal/slowdown, reviewer traces, side-by-side comparison, and a fixed evaluation suite.
 
-The implementation is deliberately local and reproducible. It works without an LLM key by using the verified template renderer. When `OPENAI_API_KEY` is present, one constrained OpenAI Responses call may select connective style for an approved lesson; it cannot grade, choose policy, alter physics content, or write learner memory.
+The implementation is deliberately local and reproducible. It works without an LLM key by using verified lesson and exercise fallbacks. When a provider is configured, the model can answer lesson-grounded questions, select connective style, and propose bounded exercise parameters. Trusted backend code still chooses the learning policy, authors and solves exercises, validates units, grades responses, and writes learner memory.
+
+For a shareable overview of the latest experience, architecture, demo path, validation, and prototype boundaries, see [Latest work-trial features](docs/work-trial-latest-features.md).
 
 ## Run locally
 
@@ -33,16 +35,16 @@ npm install
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173`. Vite proxies `/api` to the local FastAPI service. The student experience remains runnable with deterministic mock fallback data if the API is unavailable.
+Open `http://127.0.0.1:5173`. The Open Chat Tutor is at `http://127.0.0.1:5173/chat`. Vite proxies `/api` to the local FastAPI service. The student experience remains runnable with deterministic mock fallback data if the API is unavailable.
 
-To enable the optional live renderer before starting the backend:
+To enable the live OpenAI features before starting the backend:
 
 ```powershell
 $env:OPENAI_API_KEY = "your-key"
 $env:OPENAI_MODEL = "gpt-5-mini"
 ```
 
-Without those variables, the same graph runs with zero model calls and the deterministic renderer.
+An OpenAI-compatible Chat Completions provider can also be configured with `LLM_BASE_URL`, `LLM_API_KEY`, and `LLM_MODEL`. Without a configured provider, the same workflows use the deterministic renderer, a limited lesson guide, and verified practice-bank exercises.
 
 Renderer decisions are written to `backend/data/runtime/prompt_logs/llm-calls.jsonl`. Live mode records the exact bounded request and validated response; template mode records that the provider call was skipped and why. The logger never stores the API key, learner identity, or raw learner history. A checked-in application-run bundle and integrity hashes are indexed in [`PROMPT_LOGS.md`](PROMPT_LOGS.md).
 
@@ -66,32 +68,41 @@ If content is unsupported, the graph routes to `safe_refusal`. If the live rende
 
 ```powershell
 cd D:\olympiz-adaptive-tutor\backend
+.\.venv\Scripts\python.exe -m pytest tests\unit -q
 .\.venv\Scripts\python.exe scripts\run_evaluation.py
 
 cd D:\olympiz-adaptive-tutor
 npm run build
+npm run test:sites
 ```
 
 The work-trial gate is intentionally small: one golden evaluation command and one frontend production build. Generic API integration testing and lint tooling were removed from the trial scope. Focused reducer and policy unit tests remain available through the optional `dev` dependency.
 
 ## Reviewer path
 
-1. Start a Day 0 diagnostic and complete the cold-start placement flow.
-2. Open Day N and compare Kabir, Dev, and Isha to see misconception handling, safe slowdown, and safe refusal.
-3. Use **Compare learners** to inspect deterministic plan differences.
-4. Run **Evaluation** to verify the eight golden fixture policies.
-5. Open the reviewer trace drawer during a lesson to inspect evidence, rule, policy, content, latency, and hash provenance.
+1. Open **Your open chat tutor**, select Asha, Kabir, or Meera, and compare how the same class lesson receives different support.
+2. Use **Explore**, **Prepare**, **Practice**, and **Revise**; submit an answer and confirm that checked work updates learner memory.
+3. Start a Day 0 diagnostic and complete the cold-start placement flow.
+4. Open Day N and compare Kabir, Dev, and Isha to see misconception handling, safe slowdown, and safe refusal.
+5. Use **Compare learners** to inspect deterministic plan differences.
+6. Run **Evaluation** to verify the eight golden fixture policies.
+7. Open a decision trace to inspect evidence, rules, provider source, content provenance, and validation.
 
 ## Project map
 
 - `src/` — React student and reviewer experience.
 - `backend/app/services/agent_graph.py` — bounded LangGraph state, nodes, and routing.
+- `backend/app/services/chat_tutor.py` — fixed-lesson open conversation, exercise delivery, grading, and session isolation.
+- `backend/app/services/exercise_generator.py` — constrained parameter generation with backend-authored and backend-solved exercises.
+- `backend/app/services/revision_planner.py` — retention-aware concept ranking, exercise-set creation, and spaced revision scheduling.
 - `backend/app/adapters/openai_renderer.py` — optional structured OpenAI Responses adapter and verified fallback.
 - `backend/app/` — FastAPI modular monolith, learner reducer, policy, planner, catalog, grader, safety, and persistence.
 - `backend/data/` — 18 verified mechanics items, eight learner fixtures, and local runtime JSONL.
 - `backend/scripts/run_evaluation.py` — the single reviewer-facing golden evaluation.
 - `backend/scripts/generate_application_logs.py` — runs four representative scenarios and exports actual application prompt/trace logs.
 - `PROMPT_LOGS.md` — index and interpretation guide for the checked-in application log bundle.
+- `docs/work-trial-latest-features.md` — shareable latest-feature brief, architecture, demo path, evidence, and limitations.
+- `docs/open-chat-tutor.md` — detailed Open Chat design and implementation contract.
 - `backend/tests/unit/` — focused reducer, policy, plan, determinism, and safety unit tests.
 - `docs/01-product-idea-and-solution-architecture.md` — detailed problem framing, product idea, requirements, solution architecture, agent flow, safety, evaluation, roadmap, and presentation narrative.
 - `docs/02-code-files-methods-architecture.md` — engineer onboarding guide covering files, domain models, classes, methods, endpoints, call paths, extension points, debugging, and verification.

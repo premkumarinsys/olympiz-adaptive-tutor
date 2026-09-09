@@ -15,6 +15,7 @@ docs/*
 !docs/prompt-logs/
 !docs/prompt-logs/**
 !docs/open-chat-tutor.md
+!docs/work-trial-latest-features.md
 output/
 
 # Agent and local tooling state
