@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from app.domain.models import ConceptState, RetentionEstimate
 
-BASE_HALF_LIFE_DAYS = 7.0
-RETENTION_FLOOR = 0.75
+BASE_HALF_LIFE_DAYS = 14.0
+RETENTION_FLOOR = 0.60
 STALE_MAX_OFFSET_DAYS = 2
 MIN_HALF_LIFE_DAYS = 0.25
 
