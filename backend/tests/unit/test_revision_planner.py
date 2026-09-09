@@ -227,7 +227,9 @@ def test_slot_beyond_horizon_is_rejected(fixtures, catalog, generator):
     tampered = plan.model_copy(update={"schedule": (stretched, *plan.schedule[1:])})
     ok, reason = validate_revision_plan(tampered, catalog.catalog)
     assert not ok
-    assert reason in {"SLOT_BEYOND_HORIZON", "SLOT_ORDER_INVALID"}
+    # kabir produces exactly one slot, so the order checks pass unconditionally and
+    # only the horizon check can fire. Assert it exactly.
+    assert reason == "SLOT_BEYOND_HORIZON"
 
 
 def test_catalog_item_that_is_not_in_the_catalog_is_rejected(
@@ -264,3 +266,21 @@ def test_generated_item_must_use_a_generated_content_id(fixtures, catalog, gener
     ok, reason = validate_revision_plan(tampered, catalog.catalog)
     assert not ok
     assert reason == "GENERATED_ITEM_INVALID"
+
+
+def test_empty_exercise_set_is_rejected(fixtures, catalog, generator):
+    plan = _plan(fixtures, catalog, generator, "kabir")
+    tampered = plan.model_copy(
+        update={"exercise_set": plan.exercise_set.model_copy(update={"items": ()})}
+    )
+    ok, reason = validate_revision_plan(tampered, catalog.catalog)
+    assert not ok
+    assert reason == "NO_VERIFIED_CONTENT"
+
+
+def test_empty_schedule_is_rejected(fixtures, catalog, generator):
+    plan = _plan(fixtures, catalog, generator, "kabir")
+    tampered = plan.model_copy(update={"schedule": ()})
+    ok, reason = validate_revision_plan(tampered, catalog.catalog)
+    assert not ok
+    assert reason == "NO_VERIFIED_CONTENT"

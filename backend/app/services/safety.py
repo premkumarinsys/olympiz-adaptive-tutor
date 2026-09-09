@@ -21,6 +21,12 @@ def validate_revision_plan(
     known_content = {item.content_id for item in catalog.items}
     allowed = set(plan.allowed_claim_ids)
 
+    # Defence in depth for spec §9. build_revision_plan already refuses on an empty
+    # exercise set, but the loops below are no-ops on empty collections, so without
+    # this guard a degenerate plan arriving by any other path would validate clean.
+    if not plan.exercise_set.items or not plan.schedule:
+        return False, "NO_VERIFIED_CONTENT"
+
     if [slot.order for slot in plan.schedule] != list(range(1, len(plan.schedule) + 1)):
         return False, "SLOT_ORDER_INVALID"
     keys = [(slot.offset_days, slot.concept_id) for slot in plan.schedule]
