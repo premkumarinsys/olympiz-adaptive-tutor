@@ -210,9 +210,10 @@ def test_unknown_claim_is_rejected(fixtures, catalog, generator):
 
 
 def test_out_of_order_slots_are_rejected(fixtures, catalog, generator):
-    plan = _plan(fixtures, catalog, generator, "rohan")
-    if len(plan.schedule) < 2:
-        pytest.skip("fixture produced a single slot")
+    # asha is the only fixture with two graded concepts, so she is the only one whose
+    # schedule can be put out of order. Do not swap in another fixture and skip.
+    plan = _plan(fixtures, catalog, generator, "asha")
+    assert len(plan.schedule) >= 2, "asha must produce a multi-slot schedule"
     shuffled = (plan.schedule[1], plan.schedule[0], *plan.schedule[2:])
     tampered = plan.model_copy(update={"schedule": shuffled})
     ok, reason = validate_revision_plan(tampered, catalog.catalog)
