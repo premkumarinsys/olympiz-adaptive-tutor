@@ -296,6 +296,8 @@ def build_revision_plan(
     for concept_id, concept in fill_order:
         order = len(items) + 1
         misconception = _active_misconception(concept)
+        intent = _intent(concept, concept_id, goal)
+        target_band = _slot_band(intent, base_band)
         if misconception and not probe_placed:
             probe = _catalog_item(
                 catalog, concept_id, goal, _slot_band("misconception_repair", base_band),
@@ -309,11 +311,21 @@ def build_revision_plan(
                 continue
 
         result = generator.generate(
-            memory=memory, action="revise", used_signatures=list(used_signatures)
+            memory=memory,
+            action="revise",
+            used_signatures=list(used_signatures),
+            target_concept_id=concept_id,
+            target_misconception=misconception,
+            target_difficulty_band=target_band,
         )
-        providers.add(str(result.get("provider", "deterministic")))
         generated = result.get("item")
-        if generated is not None and generated.answer_key is not None:
+        if (
+            generated is not None
+            and generated.answer_key is not None
+            and generated.concept_id == concept_id
+            and target_band[0] <= generated.difficulty <= target_band[1]
+        ):
+            providers.add(str(result.get("provider", "deterministic")))
             used_signatures.append(str(result["signature"]))
             generated_item = _exercise_item(
                 generated, order, hint_limit,
@@ -324,7 +336,7 @@ def build_revision_plan(
             continue
 
         fallback = _catalog_item(
-            catalog, concept_id, goal, base_band, FALLBACK_PEDAGOGIES[decision.base_mode],
+            catalog, concept_id, goal, target_band, FALLBACK_PEDAGOGIES[decision.base_mode],
             None, excluded + tuple(placed), order, hint_limit,
         )
         if fallback is not None:

@@ -64,6 +64,9 @@ class ExerciseGenerationState(TypedDict, total=False):
     memory: dict[str, Any]
     action: str
     used_signatures: list[str]
+    target_concept_id: str | None
+    target_misconception: str | None
+    target_difficulty_band: tuple[int, int] | None
     template_id: TemplateId
     difficulty: int
     variation_index: int
@@ -97,12 +100,18 @@ class ExerciseGenerator:
         memory: dict[str, Any],
         action: str,
         used_signatures: list[str],
+        target_concept_id: str | None = None,
+        target_misconception: str | None = None,
+        target_difficulty_band: tuple[int, int] | None = None,
     ) -> ExerciseGenerationState:
         return self.graph.invoke(
             {
                 "memory": memory,
                 "action": action,
                 "used_signatures": used_signatures,
+                "target_concept_id": target_concept_id,
+                "target_misconception": target_misconception,
+                "target_difficulty_band": target_difficulty_band,
                 "variation_index": len(used_signatures) + 1,
                 "nodes": [],
             }
@@ -112,10 +121,39 @@ class ExerciseGenerator:
     def _select_contract(state: ExerciseGenerationState) -> dict[str, Any]:
         memory = state["memory"]
         misconceptions = set(memory.get("misconceptions", ()))
-        if "force_required_for_motion" in misconceptions:
+        target = state.get("target_concept_id")
+        target_misconception = state.get("target_misconception")
+        if target == "net_force":
+            template_id: TemplateId = (
+                "constant_velocity"
+                if target_misconception == "force_required_for_motion"
+                else "opposing_forces"
+            )
+        elif target == "newton_second_law":
+            template_id = (
+                "opposing_forces"
+                if target_misconception == "adds_forces_as_scalars"
+                else "force_from_mass_and_acceleration"
+            )
+        elif "force_required_for_motion" in misconceptions:
             template_id: TemplateId = "constant_velocity"
         elif "adds_forces_as_scalars" in misconceptions:
             template_id = "opposing_forces"
+        elif state["action"] == "revise":
+            concepts = memory.get("concepts", {})
+            target = min(
+                ("net_force", "newton_second_law"),
+                key=lambda concept_id: (
+                    not concepts.get(concept_id, {}).get("stale", True),
+                    concepts.get(concept_id, {}).get("mastery", 0.5),
+                    concept_id,
+                ),
+            )
+            template_id = (
+                "opposing_forces"
+                if target == "net_force"
+                else "force_from_mass_and_acceleration"
+            )
         elif memory.get("base_mode") == BaseMode.CHALLENGE.value:
             template_id = "force_from_mass_and_acceleration"
         else:
@@ -125,6 +163,10 @@ class ExerciseGenerator:
             BaseMode.GUIDED.value: 2,
             BaseMode.CHALLENGE.value: 4,
         }.get(memory.get("base_mode"), 2)
+        difficulty_band = state.get("target_difficulty_band")
+        if difficulty_band is not None:
+            low, high = difficulty_band
+            difficulty = max(low, min(high, difficulty))
         return {
             "template_id": template_id,
             "difficulty": difficulty,
@@ -323,7 +365,9 @@ class ExerciseGenerator:
             hints = ("Multiply the mass by the acceleration.",)
         else:
             net_force = draft.force_forward_n - draft.force_opposing_n
-            if difficulty <= 1:
+            if state.get("target_concept_id") == "net_force" or (
+                state.get("target_concept_id") is None and difficulty <= 1
+            ):
                 concept_id = "net_force"
                 answer = float(net_force)
                 unit = "N"
@@ -402,7 +446,7 @@ class ExerciseGenerator:
             answer_key=AnswerKey(
                 kind="numeric",
                 value=answer,
-                tolerance=0.011 if unit == "m/s²" else 0.001,
+                tolerance=0.011 if unit == "m/s^2" else 0.001,
                 unit=unit,
             ),
             hints=tuple(

@@ -313,3 +313,48 @@ def test_different_base_modes_get_different_item_sets(fixtures, catalog, generat
         for item in _plan(fixtures, catalog, generator, "kabir").exercise_set.items
     }
     assert challenger != guided
+
+
+def test_revision_generator_receives_and_must_match_each_ranked_target(
+    fixtures, catalog
+):
+    calls = []
+
+    class WrongTargetGenerator:
+        def generate(self, **kwargs):
+            calls.append(kwargs)
+            target = kwargs["target_concept_id"]
+            source_id = (
+                "n2l_target_01"
+                if target == "net_force"
+                else "net_force_anchor_02"
+            )
+            wrong = catalog.get(source_id).model_copy(
+                update={
+                    "content_id": f"generated_wrong_{len(calls)}",
+                    "version": "generated-1.0",
+                    "status": "draft",
+                }
+            )
+            return {
+                "item": wrong,
+                "signature": f"wrong-{len(calls)}",
+                "template_id": "opposing_forces",
+                "provider": "fake_provider",
+                "nodes": [],
+            }
+
+    plan = _plan(fixtures, catalog, WrongTargetGenerator(), "asha")
+
+    assert plan is not None
+    assert calls
+    assert {call["target_concept_id"] for call in calls} <= {
+        slot.concept_id for slot in plan.schedule
+    }
+    assert all(call["target_difficulty_band"] for call in calls)
+    assert all(
+        not item.content_ref.content_id.startswith("generated_")
+        and item.derived_from is None
+        for item in plan.exercise_set.items
+    )
+    assert plan.exercise_provider == "deterministic"

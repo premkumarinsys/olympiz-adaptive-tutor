@@ -49,14 +49,15 @@ async function chatRequest(path: string, body?: object): Promise<ChatSession> {
 function TutorContent({ content }: { content: string }) {
   const inline = (text: string) => text.split(/(\*\*[^*]+\*\*)/g).map((part, index) =>
     part.startsWith("**") && part.endsWith("**") ? <strong key={index}>{part.slice(2, -2)}</strong> : part);
-  const blocks: { kind: "paragraph" | "ordered" | "unordered" | "heading"; lines: string[] }[] = [];
+  const blocks: { kind: "paragraph" | "ordered" | "unordered" | "heading"; lines: string[]; level?: number }[] = [];
   let current: (typeof blocks)[number] | undefined;
   for (const line of content.split("\n")) {
     if (!line.trim()) { current = undefined; continue; }
-    const kind = /^\s*\d+[.)]\s+/.test(line) ? "ordered" : /^\s*[-*•]\s+/.test(line) ? "unordered" : /^#{1,6}\s+/.test(line) ? "heading" : "paragraph";
+    const heading = line.match(/^(#{1,6})\s+/);
+    const kind = /^\s*\d+[.)]\s+/.test(line) ? "ordered" : /^\s*[-*•]\s+/.test(line) ? "unordered" : heading ? "heading" : "paragraph";
     const text = kind === "ordered" ? line.replace(/^\s*\d+[.)]\s+/, "") : kind === "unordered" ? line.replace(/^\s*[-*•]\s+/, "") : kind === "heading" ? line.replace(/^#{1,6}\s+/, "") : line;
     if (!current || current.kind !== kind || kind === "heading") {
-      current = {kind, lines: []}; blocks.push(current);
+      current = {kind, lines: [], level: heading ? Math.min(6, Math.max(2, heading[1].length)) : undefined}; blocks.push(current);
     }
     current.lines.push(text);
   }
@@ -65,7 +66,14 @@ function TutorContent({ content }: { content: string }) {
       const items = block.lines.map((line, i) => <li key={i}>{inline(line)}</li>);
       return block.kind === "ordered" ? <ol key={index}>{items}</ol> : <ul key={index}>{items}</ul>;
     }
-    if (block.kind === "heading") return <p key={index}><strong>{inline(block.lines[0])}</strong></p>;
+    if (block.kind === "heading") {
+      const heading = inline(block.lines[0]);
+      if (block.level === 3) return <h3 key={index}>{heading}</h3>;
+      if (block.level === 4) return <h4 key={index}>{heading}</h4>;
+      if (block.level === 5) return <h5 key={index}>{heading}</h5>;
+      if (block.level === 6) return <h6 key={index}>{heading}</h6>;
+      return <h2 key={index}>{heading}</h2>;
+    }
     return <p key={index}>{block.lines.map((line, i) => <span key={i}>{i > 0 && <br/>}{inline(line)}</span>)}</p>;
   })}</div>;
 }
@@ -75,6 +83,7 @@ export function OpenChatPage() {
   const [selected, setSelected] = useState("");
   const [session, setSession] = useState<ChatSession | null>(null);
   const [busy, setBusy] = useState(false);
+  const [busyAction, setBusyAction] = useState<Action | "connect" | null>(null);
   const [error, setError] = useState("");
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
@@ -91,7 +100,7 @@ export function OpenChatPage() {
   const learner = learners.find(item => item.learner_id === selected);
   async function start(fresh = false) {
     if (!selected || pending.current) return;
-    pending.current = true; setBusy(true); setError(""); setSession(null);
+    pending.current = true; setBusy(true); setBusyAction("connect"); setError(""); setSession(null);
     try {
       const saved = fresh ? null : sessionStorage.getItem("olympiz-chat-" + selected);
       let result: ChatSession;
@@ -102,12 +111,12 @@ export function OpenChatPage() {
       setSession(result); sessionStorage.setItem("olympiz-chat-" + selected, result.session_id);
       setQuestion(""); setAnswer(""); setHintFor(""); setActiveStage("ask");
     } catch(e) { setError(e instanceof Error ? e.message : "Unable to connect to your tutor."); }
-    finally { pending.current = false; setBusy(false); }
+    finally { pending.current = false; setBusy(false); setBusyAction(null); }
   }
   useEffect(() => { if (selected) void start(); }, [selected]);
   async function send(action: Action, message: string, exerciseId?: string) {
     if (!session || pending.current || !message.trim()) return;
-    pending.current = true; setBusy(true); setError("");
+    pending.current = true; setBusy(true); setBusyAction(action); setError("");
     try {
       const signature = JSON.stringify([session.session_id, action, message.trim(), exerciseId, confidence, sessionStorage.getItem("olympiz-hint-" + exerciseId)]);
       if (retryTurn.current?.signature !== signature) retryTurn.current = { signature, id: crypto.randomUUID() };
@@ -120,17 +129,27 @@ export function OpenChatPage() {
       if (action === "answer") setAnswer("");
       setHintFor("");
     } catch(e) { setError(e instanceof Error ? e.message : "Your message could not be sent."); }
-    finally { pending.current = false; setBusy(false); }
+    finally { pending.current = false; setBusy(false); setBusyAction(null); }
   }
   const latestExerciseMessage = [...(session?.messages ?? [])].reverse().find(message => message.exercise);
   const exercise = latestExerciseMessage?.exercise;
   const answered = exercise && session?.messages.slice(session.messages.indexOf(latestExerciseMessage!) + 1).some(message => message.feedback?.exercise_id === exercise.exercise_id && ["correct", "incorrect"].includes(message.feedback.outcome));
+  useEffect(() => {
+    setAnswer("");
+    setConfidence("0.7");
+    setHintFor("");
+  }, [exercise?.exercise_id]);
   const stages: {action: Action; label: string; detail: string}[] = [
     {action: "ask", label: "Explore", detail: "Ask anything"},
     {action: "prepare", label: "Prepare", detail: "Build understanding"},
     {action: "practice", label: "Practice", detail: "Try it yourself"},
     {action: "revise", label: "Revise", detail: "Make it stick"},
   ];
+  const busyMessage = busyAction === "answer" ? "Checking your answer..."
+    : busyAction === "practice" ? "Creating your next practice problem..."
+    : busyAction === "revise" ? "Building revision from your learning memory..."
+    : busyAction === "prepare" ? "Preparing the next step..."
+    : "Thinking through your question...";
   return <div className="chat-page">
     <header className="app-header chat-header">
       <Link className="brand" to="/" aria-label="Olympiz home">Olympiz</Link>
@@ -185,7 +204,7 @@ export function OpenChatPage() {
             {session?.messages.map((message, index) => <article className={"chat-message " + (message.role === "user" ? "from-student" : "from-tutor")} key={message.id ?? index}>
               <div className="chat-message-label">{message.role === "user" ? <span>{session.display_name.slice(0,1)}</span> : <ChatCircle size={21}/>}<strong>{message.role === "user" ? "You" : "Olympiz tutor"}</strong></div>
               <TutorContent content={message.content}/>
-              {message.exercise && <section className="chat-exercise" aria-label="Personalized exercise"><p className="section-kicker">Your turn · personalized practice</p>{message.exercise.source_label && <p className="chat-exercise-source">{message.exercise.source_label}</p>}<h2>{message.exercise.prompt}</h2>
+              {message.exercise && <section className="chat-exercise" aria-labelledby={"exercise-title-" + message.exercise.exercise_id}><p className="section-kicker">Your turn · personalized practice</p>{message.exercise.source_label && <p className="chat-exercise-source">{message.exercise.source_label}</p>}<h2 id={"exercise-title-" + message.exercise.exercise_id}>{message.exercise.prompt}</h2>
                 {message.exercise.exercise_id === exercise?.exercise_id && !answered ? <>
                   {message.exercise.hints?.length > 0 && <><button className="text-button" disabled={busy} onClick={() => { sessionStorage.setItem("olympiz-hint-" + message.exercise!.exercise_id, "used"); setHintFor(hintFor ? "" : message.exercise!.exercise_id); }} aria-expanded={hintFor === message.exercise.exercise_id}>{hintFor ? "Hide hint" : "I’d like a hint"}</button>
                     {hintFor === message.exercise.exercise_id && <p className="chat-hint">{message.exercise.hints[0]}</p>}</>}
@@ -198,7 +217,7 @@ export function OpenChatPage() {
               {message.feedback && <div className={"chat-feedback " + (message.feedback.outcome === "incorrect" ? "needs-review" : "")}>{message.feedback.outcome === "correct" ? "Answer checked · correct" : message.feedback.outcome === "incorrect" ? "Answer checked · revisit this concept" : (message.feedback.exercise_id === exercise?.exercise_id && !answered ? "Answer not graded · try again above" : "This earlier answer was not graded")}</div>}
             </article>)}
           </div>
-          {busy && session && <p className="chat-thinking" role="status">The tutor is working through your question…</p>}
+          {busy && session && <p className="chat-thinking" role="status">{busyMessage}</p>}
           {error && <div className="inline-error" role="alert">{error}{!session && <button onClick={() => void start()} disabled={busy}>Retry connection</button>}</div>}
           <div ref={bottom}/>
         </div>
@@ -218,8 +237,3 @@ export function OpenChatPage() {
     </footer>
   </div>;
 }
-
-
-
-
-

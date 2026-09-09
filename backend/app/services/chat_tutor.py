@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import json
 import re
+import threading
 from datetime import UTC, datetime
 from typing import Any, TypedDict
 
@@ -49,6 +50,8 @@ class ChatTutor:
         self.root = self.repo.root / "chat_sessions"
         self.root.mkdir(parents=True, exist_ok=True)
         self.exercise_generator = ExerciseGenerator(runtime.renderer)
+        self._session_locks: dict[str, threading.RLock] = {}
+        self._session_locks_guard = threading.Lock()
         graph = StateGraph(ChatGraphState)
         graph.add_node("read_student_memory", self._memory_node)
         graph.add_node("personalize_within_class_lesson", self._reply_node)
@@ -77,6 +80,10 @@ class ChatTutor:
 
     def _path(self, session_id):
         return self.root / (self.repo._safe(session_id) + ".json")
+
+    def _session_lock(self, session_id: str) -> threading.RLock:
+        with self._session_locks_guard:
+            return self._session_locks.setdefault(session_id, threading.RLock())
 
     @staticmethod
     def _public(session):
@@ -114,8 +121,8 @@ class ChatTutor:
         return self._public(session)
 
     def send(self, session_id, request: ChatMessageRequest):
-        # Serialize local prototype turns so retries cannot duplicate history or evidence.
-        with self.repo._lock:
+        # Serialize one conversation while allowing other learners to keep working.
+        with self._session_lock(session_id):
             session = self._load(session_id)
             previous = session["_requests"].get(request.client_turn_id)
             request_hash = content_hash(request)
@@ -249,7 +256,7 @@ class ChatTutor:
             reply["feedback"] = self._answer(session, request)
             reply["feedback"]["exercise_id"] = request.exercise_id
             reply["content"] = ("That's right. " if reply["feedback"]["outcome"] == "correct" else "Let's check that. ") + reply["feedback"]["explanation"]
-            nodes.append("grade_verified_exercise")
+            nodes.append("grade_exercise_server_side")
         elif request.action in {"practice", "revise"}:
             reply["exercise"], provider, reason, generation_nodes = self._exercise(
                 session, memory, request.action

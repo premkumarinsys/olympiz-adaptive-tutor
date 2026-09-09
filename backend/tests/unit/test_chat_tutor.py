@@ -1,4 +1,6 @@
 import json
+from concurrent.futures import ThreadPoolExecutor
+from threading import Event
 
 import pytest
 
@@ -131,3 +133,33 @@ def test_persisted_history(tutor):
     s = start(tutor)
     r = send(tutor, s, "r", action="revise")
     assert ChatTutor(tutor.runtime).get(s["session_id"])["messages"] == r["messages"]
+
+
+def test_slow_provider_in_one_session_does_not_block_another(tutor):
+    slow_session = start(tutor)
+    fast_session = start(tutor, "meera")
+    entered = Event()
+    release = Event()
+    original = tutor._open_answer
+
+    def blocking_open_answer(session, question, memory):
+        if question == "slow question":
+            entered.set()
+            release.wait(timeout=2)
+        return original(session, question, memory)
+
+    tutor._open_answer = blocking_open_answer
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        slow = pool.submit(
+            send, tutor, slow_session, "slow-turn", message="slow question"
+        )
+        assert entered.wait(timeout=1)
+        fast = pool.submit(
+            send, tutor, fast_session, "fast-turn", action="prepare"
+        )
+        try:
+            result = fast.result(timeout=1)
+            assert result["messages"][-1]["action"] == "prepare"
+        finally:
+            release.set()
+        slow.result(timeout=1)

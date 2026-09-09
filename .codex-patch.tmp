@@ -1,6 +1,0 @@
-*** Begin Patch
-*** Update File: backend/tests/unit/test_exercise_generator.py
-@@
--            "force_forward_n": 500,
-+            "force_forward_n": 120,
-*** End Patch
