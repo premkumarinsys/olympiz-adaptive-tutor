@@ -59,18 +59,36 @@ REVISION_STOP_CONDITIONS = (
     "AS_OF_BEFORE_MEMORY",
 )
 
-# Ordered by how well each pedagogy suits independent revision practice. The catalog
-# holds exactly one item per pedagogy, so a single hardcoded kind cannot fill a set.
-FALLBACK_PEDAGOGIES = (
-    "independent_check",
-    "guided_item",
-    "fading_hint_item",
-    "delayed_hint",
-    "transfer_problem",
-    "extension",
-    "confidence_activity",
-    "prerequisite_check",
-)
+# Ordered per base mode so the difficulty band actually reaches selection. The catalog
+# holds one response-required item per pedagogy, so retrieval cannot discriminate on
+# difficulty by itself — the order is what puts a challenger on transfer/extension work
+# and a foundation learner on prerequisite and confidence items.
+FALLBACK_PEDAGOGIES: dict[BaseMode, tuple[str, ...]] = {
+    BaseMode.FOUNDATION: (
+        "prerequisite_check",
+        "confidence_activity",
+        "guided_item",
+        "independent_check",
+        "fading_hint_item",
+        "delayed_hint",
+    ),
+    BaseMode.GUIDED: (
+        "independent_check",
+        "guided_item",
+        "fading_hint_item",
+        "delayed_hint",
+        "transfer_problem",
+        "extension",
+    ),
+    BaseMode.CHALLENGE: (
+        "transfer_problem",
+        "extension",
+        "delayed_hint",
+        "fading_hint_item",
+        "independent_check",
+        "guided_item",
+    ),
+}
 
 MINUTES_PER_ITEM = 4
 
@@ -306,7 +324,7 @@ def build_revision_plan(
             continue
 
         fallback = _catalog_item(
-            catalog, concept_id, goal, base_band, FALLBACK_PEDAGOGIES,
+            catalog, concept_id, goal, base_band, FALLBACK_PEDAGOGIES[decision.base_mode],
             None, excluded + tuple(placed), order, hint_limit,
         )
         if fallback is not None:

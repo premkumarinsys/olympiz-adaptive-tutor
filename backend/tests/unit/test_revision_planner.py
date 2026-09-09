@@ -284,3 +284,32 @@ def test_empty_schedule_is_rejected(fixtures, catalog, generator):
     ok, reason = validate_revision_plan(tampered, catalog.catalog)
     assert not ok
     assert reason == "NO_VERIFIED_CONTENT"
+
+
+def test_challenger_gets_stretch_difficulty_items(fixtures, catalog, generator):
+    for fixture_id in ("meera", "tara"):
+        plan = _plan(fixtures, catalog, generator, fixture_id)
+        assert max(item.difficulty for item in plan.exercise_set.items) >= 4, (
+            f"{fixture_id} is a challenger but got "
+            f"{[item.difficulty for item in plan.exercise_set.items]}"
+        )
+
+
+def test_foundation_learner_is_not_given_stretch_items(fixtures, catalog, generator):
+    plan = _plan(fixtures, catalog, generator, "asha")
+    assert max(item.difficulty for item in plan.exercise_set.items) <= 2, (
+        f"asha is foundation-first but got "
+        f"{[item.difficulty for item in plan.exercise_set.items]}"
+    )
+
+
+def test_different_base_modes_get_different_item_sets(fixtures, catalog, generator):
+    challenger = {
+        item.content_ref.content_id
+        for item in _plan(fixtures, catalog, generator, "meera").exercise_set.items
+    }
+    guided = {
+        item.content_ref.content_id
+        for item in _plan(fixtures, catalog, generator, "kabir").exercise_set.items
+    }
+    assert challenger != guided
