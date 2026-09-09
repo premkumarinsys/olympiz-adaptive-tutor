@@ -189,3 +189,77 @@ def test_every_learner_with_evidence_gets_a_usable_set(fixtures, catalog, genera
         plan = _plan(fixtures, catalog, generator, fixture_id)
         assert plan is not None, f"{fixture_id} produced no plan"
         assert plan.exercise_set.items, f"{fixture_id} produced an empty exercise set"
+
+
+from app.services.safety import validate_revision_plan
+
+
+def test_valid_plan_passes_validation(fixtures, catalog, generator):
+    plan = _plan(fixtures, catalog, generator, "kabir")
+    ok, reason = validate_revision_plan(plan, catalog.catalog)
+    assert ok
+    assert reason is None
+
+
+def test_unknown_claim_is_rejected(fixtures, catalog, generator):
+    plan = _plan(fixtures, catalog, generator, "kabir")
+    tampered = plan.model_copy(update={"allowed_claim_ids": ("claim_not_real",)})
+    ok, reason = validate_revision_plan(tampered, catalog.catalog)
+    assert not ok
+    assert reason == "UNKNOWN_CLAIM_ID"
+
+
+def test_out_of_order_slots_are_rejected(fixtures, catalog, generator):
+    plan = _plan(fixtures, catalog, generator, "rohan")
+    if len(plan.schedule) < 2:
+        pytest.skip("fixture produced a single slot")
+    shuffled = (plan.schedule[1], plan.schedule[0], *plan.schedule[2:])
+    tampered = plan.model_copy(update={"schedule": shuffled})
+    ok, reason = validate_revision_plan(tampered, catalog.catalog)
+    assert not ok
+    assert reason == "SLOT_ORDER_INVALID"
+
+
+def test_slot_beyond_horizon_is_rejected(fixtures, catalog, generator):
+    plan = _plan(fixtures, catalog, generator, "kabir")
+    stretched = plan.schedule[0].model_copy(update={"offset_days": 99})
+    tampered = plan.model_copy(update={"schedule": (stretched, *plan.schedule[1:])})
+    ok, reason = validate_revision_plan(tampered, catalog.catalog)
+    assert not ok
+    assert reason in {"SLOT_BEYOND_HORIZON", "SLOT_ORDER_INVALID"}
+
+
+def test_catalog_item_that_is_not_in_the_catalog_is_rejected(
+    fixtures, catalog, generator
+):
+    plan = _plan(fixtures, catalog, generator, "kabir")
+    first = plan.exercise_set.items[0]
+    ghost = first.model_copy(
+        update={"content_ref": first.content_ref.model_copy(update={"content_id": "ghost_01"})}
+    )
+    tampered = plan.model_copy(
+        update={
+            "exercise_set": plan.exercise_set.model_copy(
+                update={"items": (ghost, *plan.exercise_set.items[1:])}
+            )
+        }
+    )
+    ok, reason = validate_revision_plan(tampered, catalog.catalog)
+    assert not ok
+    assert reason == "UNKNOWN_CONTENT_ID"
+
+
+def test_generated_item_must_use_a_generated_content_id(fixtures, catalog, generator):
+    plan = _plan(fixtures, catalog, generator, "kabir")
+    first = plan.exercise_set.items[0]
+    mislabelled = first.model_copy(update={"derived_from": "opposing_forces"})
+    tampered = plan.model_copy(
+        update={
+            "exercise_set": plan.exercise_set.model_copy(
+                update={"items": (mislabelled, *plan.exercise_set.items[1:])}
+            )
+        }
+    )
+    ok, reason = validate_revision_plan(tampered, catalog.catalog)
+    assert not ok
+    assert reason == "GENERATED_ITEM_INVALID"
