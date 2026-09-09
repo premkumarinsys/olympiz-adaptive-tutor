@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from enum import StrEnum
 from typing import Annotated, Any, Literal
 
@@ -31,6 +31,7 @@ class Outcome(StrEnum):
     SAFE_SLOWDOWN = "safe_slowdown"
     SAFE_REFUSAL = "safe_refusal"
     COMPLETED = "completed"
+    REVISION_READY = "revision_ready"
 
 
 class DifficultyRelation(StrEnum):
@@ -396,6 +397,64 @@ class LessonPlan(StrictModel):
     decision: PolicyDecision
     blocks: tuple[LessonBlock, ...]
     limits: PlanLimits
+    allowed_claim_ids: tuple[str, ...]
+    stop_conditions: tuple[str, ...]
+
+
+class RevisionSlot(StrictModel):
+    order: int
+    offset_days: int
+    scheduled_for: date
+    concept_id: str
+    intent: Literal[
+        "retrieval_practice", "misconception_repair", "stretch", "prerequisite_repair"
+    ]
+    target_item_count: int = Field(ge=1, le=10)
+    difficulty_band: tuple[int, int]
+    retention: RetentionEstimate
+    reason: DecisionReason
+    status: Literal["scheduled", "unavailable"] = "scheduled"
+    unavailable_reason: str | None = None
+
+
+class ExerciseItem(StrictModel):
+    order: int
+    content_ref: ContentRef
+    derived_from: str | None = None      # generator template_id when generated, else None
+    concept_id: str
+    difficulty: int = Field(ge=1, le=5)
+    representation: str = "balanced"
+    targets_misconception: str | None = None
+    prompt: str
+    answer_key: AnswerKey
+    hints: tuple[Hint, ...] = ()
+    hint_limit: int = 0
+    claim_ids: tuple[str, ...] = ()
+    checksum: str = ""
+
+
+class ExerciseSet(StrictModel):
+    items: tuple[ExerciseItem, ...]
+    difficulty_band: tuple[int, int]
+    estimated_minutes: int = Field(ge=0)
+
+
+class RevisionPlan(StrictModel):
+    plan_schema_version: Literal["1.0"] = "1.0"
+    plan_id: str
+    input_hash: str
+    plan_hash: str
+    schedule_hash: str
+    as_of: datetime
+    horizon_days: int
+    learner_state_version: int
+    policy_version: str
+    catalog_version: str
+    exercise_provider: str
+    goal: SessionGoal
+    decision: PolicyDecision
+    exercise_set: ExerciseSet
+    schedule: tuple[RevisionSlot, ...]
     allowed_claim_ids: tuple[str, ...]
     stop_conditions: tuple[str, ...]
 
