@@ -191,6 +191,14 @@ class MisconceptionState(StrictModel):
     evidence_ids: tuple[str, ...]
 
 
+class RetentionEstimate(StrictModel):
+    concept_id: str
+    mastery_now: float = Field(ge=0, le=1)
+    half_life_days: float = Field(gt=0)
+    projected_at_slot: float = Field(ge=0, le=1)
+    floor: float = Field(ge=0, le=1)
+
+
 class ConceptState(StrictModel):
     mastery: MasteryEstimate
     scaffolding: ScaffoldingEstimate
