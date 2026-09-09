@@ -1,9 +1,10 @@
 # Olympiz deterministic backend
 
-FastAPI modular monolith for the Day 0 and Day N adaptive-tutor work trial. A
-bounded LangGraph state machine makes the agent loop explicit and inspectable.
-Verified content, learner-state reduction, policy, retrieval, lesson structure,
-grading, safety, and memory remain deterministic.
+FastAPI modular monolith for the Day 0, Day N, and Open Chat adaptive-tutor work
+trial. Bounded LangGraph workflows make the core lesson, open conversation,
+exercise generation, and revision flows explicit and inspectable. Verified
+content, learner-state reduction, policy, trusted exercise solving, grading,
+safety, and memory writes remain deterministic.
 
 ## Run
 
@@ -51,7 +52,27 @@ Placement and Day N lesson creation take the full policy/plan/render route. The
 trace records every graph node, renderer adapter, fallback reason, and model-call
 count.
 
-## Optional OpenAI renderer
+## Open Chat and revision
+
+The Open Chat API keeps the teacher-authored lesson fixed while adapting
+explanations, scaffolding, practice, and revision from the learner's reduced
+memory. It supports `ask`, `prepare`, `practice`, `revise`, and `answer`
+actions under `/api/v1/chat/sessions`.
+
+Dynamic exercises use a separate three-node graph. The configured model can
+propose only an approved scenario and bounded numeric parameters. Backend code
+selects the target concept and difficulty, validates the response, writes the
+question, computes the answer, checks units, and keeps the answer key out of the
+public payload. Invalid, duplicate, unavailable, or mistargeted generation falls
+back to the verified catalog.
+
+The revision planner combines mastery, uncertainty, staleness, misconceptions,
+and retention estimates to build a targeted exercise set and ordered schedule.
+The operation is integrated into the agent graph and validated in the unit
+suite. Open Chat currently exposes targeted revision practice; the full schedule
+does not yet have a separate endpoint or UI.
+
+## Optional model providers
 
 Deterministic template rendering is the default and requires no secret. Set
 `OPENAI_API_KEY` to enable the optional OpenAI Responses adapter. The model is
@@ -63,21 +84,38 @@ $env:OPENAI_MODEL = "gpt-5-mini"
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-The adapter makes at most one Responses API call for a rendered plan, uses a
-strict JSON schema, has a six-second default timeout and 500-token output cap,
-and sets `store=False`. The model selects only connective style. It cannot
-change content, claims, answers, block order, policy, or memory. Provider,
-timeout, schema, or validation failures use `TemplateRenderer` automatically.
-The deterministic evaluation always disables the live renderer even when the
-environment contains an API key.
+An OpenAI-compatible Chat Completions provider can instead use `LLM_BASE_URL`,
+`LLM_API_KEY`, and `LLM_MODEL`.
+
+For a Day 0 or Day N rendered plan, the Responses adapter makes at most one
+strict-schema call with a six-second default timeout, a 500-token output cap,
+and `store=False`. That call selects connective style only and cannot change
+content, claims, answers, block order, policy, or memory. Open Chat uses the
+same configured client through separate prompts for lesson-grounded conversation
+and bounded exercise parameters. Provider, timeout, schema, or validation
+failures use deterministic fallbacks. The golden evaluation always disables the
+live provider even when the environment contains a key.
+
+Each renderer decision is appended to `data/runtime/prompt_logs/llm-calls.jsonl`.
+Live calls record the exact bounded request, provider response, validation result,
+duration, and hashes. With no key, the record explicitly says the call was
+skipped and keeps `response` as `null`; no response is fabricated. The logger
+does not write credentials, learner identifiers, or raw learner history.
+
+Generate the checked-in, reproducible application-log bundle with:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\generate_application_logs.py
+```
 
 ## Safety boundary
 
 - The browser never supplies answer keys or rubrics.
 - Every physics-bearing block references the pinned verified catalog.
 - Unsupported topics return a successful `safe_refusal` outcome.
-- The optional model is downstream of the approved plan and never receives a
-  memory-write or grading capability.
+- The core lesson renderer places the optional model downstream of the approved
+  plan. Open Chat gives the model no memory-write or grading capability, and its
+  generated exercise parameters are solved and checked by trusted code.
 - Events are append-only; snapshots are derived and expendable.
 - The trial JSONL adapter is designed for a single local worker. Production
   should use transactional storage with a learner/idempotency unique constraint.

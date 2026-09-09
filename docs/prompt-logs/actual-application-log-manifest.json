@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "run_id": "app_log_20260901T122440Z_168179f4",
+  "generated_at_utc": "2026-09-01T12:24:40.283313+00:00",
+  "source": "TutorRuntime.start_dayn using production application services",
+  "runtime_root": "backend\\data\\runtime\\log_exports\\app_log_20260901T122440Z_168179f4",
+  "execution_mode": {
+    "renderer": "template",
+    "openai_api_key_configured": false,
+    "live_provider_calls": 0,
+    "note": "These are actual application records. The request payload is the exact payload the bounded renderer would send, but provider_called=false and response=null because no API key was configured. No response was fabricated."
+  },
+  "scenarios": [
+    {
+      "fixture_id": "asha",
+      "session_id": "ses_f932c06fb1ad4611",
+      "trace_id": "tr_d781c3d3f2404a0e",
+      "status": "lesson",
+      "plan_hash": "sha256:bad5bfda066336edc115a01f8932960844f98c3e8f885016ffc9de3d1f8b55c5",
+      "renderer_adapter": "template",
+      "model_calls": 0
+    },
+    {
+      "fixture_id": "meera",
+      "session_id": "ses_2791cdfafb1c47c7",
+      "trace_id": "tr_ee06a1d2987c4c6b",
+      "status": "lesson",
+      "plan_hash": "sha256:e468064f94f609ae87ce11b8a44a59fe3a6d13266ede63dd4d9e4538177a247f",
+      "renderer_adapter": "template",
+      "model_calls": 0
+    },
+    {
+      "fixture_id": "rohan",
+      "session_id": "ses_2327965fe2024979",
+      "trace_id": "tr_83ca301086de4ac1",
+      "status": "lesson",
+      "plan_hash": "sha256:200fa35ee75d7ac1f6aa708f86099f16c72854d42b0aec7216845e32a274c681",
+      "renderer_adapter": "template",
+      "model_calls": 0
+    },
+    {
+      "fixture_id": "isha",
+      "session_id": "ses_806a36329b534f16",
+      "trace_id": "tr_545f5e31fe6e40b0",
+      "status": "refused",
+      "plan_hash": null,
+      "renderer_adapter": "none",
+      "model_calls": 0
+    }
+  ],
+  "counts": {
+    "scenarios": 4,
+    "agent_traces": 4,
+    "prompt_events": 3,
+    "provider_calls": 0,
+    "skipped_provider_calls": 3
+  },
+  "privacy": {
+    "credentials_in_logs": false,
+    "raw_learner_identifiers_in_prompt_logs": false,
+    "raw_learner_history_in_prompt_logs": false
+  }
+}

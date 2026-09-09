@@ -6,6 +6,21 @@ from dataclasses import dataclass
 from app.domain.models import ContentItem
 
 
+def _normalise_unit(value: str) -> str:
+    compact = re.sub(r"\s+", "", value.strip().casefold())
+    compact = compact.replace("\u00b2", "^2")
+    aliases = {
+        "n": "n",
+        "newton": "n",
+        "newtons": "n",
+        "m/s2": "m/s^2",
+        "m/s^2": "m/s^2",
+        "ms^-2": "m/s^2",
+        "m/s/s": "m/s^2",
+    }
+    return aliases.get(compact, compact)
+
+
 @dataclass(frozen=True)
 class Grade:
     outcome: str
@@ -19,10 +34,18 @@ def grade_response(item: ContentItem, value: str | float) -> Grade:
     if key is None:
         return Grade("ungradable", 0.0, (), 0.0)
     if key.kind == "numeric":
-        match = re.search(r"[-+]?\d*\.?\d+", str(value))
+        match = re.fullmatch(
+            r"\s*([-+]?(?:\d+(?:\.\d*)?|\.\d+))\s*(.*?)\s*",
+            str(value),
+        )
         if not match:
             return Grade("ungradable", 0.0, (), 0.0)
-        number = float(match.group(0))
+        number = float(match.group(1))
+        supplied_unit = match.group(2)
+        if supplied_unit and key.unit and (
+            _normalise_unit(supplied_unit) != _normalise_unit(key.unit)
+        ):
+            return Grade("incorrect", 0.0, ("unit_mismatch",), 1.0)
         correct = abs(number - float(key.value)) <= key.tolerance
         return Grade("correct" if correct else "incorrect", 1.0 if correct else 0.0, (), 1.0)
     normalised = str(value).strip().casefold()
@@ -36,4 +59,3 @@ def grade_response(item: ContentItem, value: str | float) -> Grade:
     if len(normalised) < 2:
         return Grade("ungradable", 0.0, (), 0.0)
     return Grade("incorrect", 0.0, item.misconception_tags[:1], 0.9)
-

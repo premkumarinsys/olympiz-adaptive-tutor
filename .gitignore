@@ -14,6 +14,8 @@ logs/
 docs/*
 !docs/prompt-logs/
 !docs/prompt-logs/**
+!docs/open-chat-tutor.md
+!docs/work-trial-latest-features.md
 output/
 
 # Agent and local tooling state
@@ -42,3 +44,5 @@ coverage/
 playwright-report/
 test-results/
 .gstack/
+/.claude-flow/
+/.codex-patch.tmp

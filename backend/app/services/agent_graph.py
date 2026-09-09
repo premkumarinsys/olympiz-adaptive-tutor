@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal, TypedDict
+from typing import Any, Literal, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 from pydantic import Field
@@ -13,6 +13,7 @@ from app.domain.models import (
     LearnerState,
     LessonPlan,
     PolicyDecision,
+    RevisionPlan,
     SessionGoal,
     StrictModel,
 )
@@ -20,7 +21,8 @@ from app.services.catalog import ContentCatalog
 from app.services.planner import build_plan
 from app.services.policy_engine import select_policy
 from app.services.reducer import reduce_events
-from app.services.safety import validate_plan
+from app.services.revision_planner import build_revision_plan, recent_content_usage
+from app.services.safety import validate_plan, validate_revision_plan
 
 
 class GraphStep(StrictModel):
@@ -30,7 +32,7 @@ class GraphStep(StrictModel):
 
 
 class TutorGraphState(TypedDict, total=False):
-    operation: Literal["day0_start", "day0_turn", "dayn_start", "dayn_turn"]
+    operation: Literal["day0_start", "day0_turn", "dayn_start", "dayn_turn", "dayn_revision"]
     events: list[LearnerEvent]
     as_of: datetime
     goal: SessionGoal
@@ -50,6 +52,9 @@ class TutorGraphState(TypedDict, total=False):
     validation_ok: bool
     error_code: str | None
     steps: list[GraphStep]
+    generator: Any
+    horizon_days: int
+    revision_plan: RevisionPlan | None
 
 
 class GraphExecution(StrictModel):
@@ -63,6 +68,7 @@ class GraphExecution(StrictModel):
     validation_ok: bool = True
     error_code: str | None = None
     steps: tuple[GraphStep, ...]
+    revision_plan: RevisionPlan | None = None
 
 
 def _step(state: TutorGraphState, node: str, outcome: str, detail: str | None = None):
@@ -79,6 +85,7 @@ class TutorAgentGraph:
         builder.add_node("reduce_memory", self._reduce_memory)
         builder.add_node("select_policy", self._select_policy)
         builder.add_node("retrieve_and_plan", self._retrieve_and_plan)
+        builder.add_node("build_revision", self._build_revision)
         builder.add_node("render", self._render)
         builder.add_node("validate_output", self._validate_output)
         builder.add_node("template_fallback", self._template_fallback)
@@ -94,14 +101,12 @@ class TutorAgentGraph:
             "reduce_memory",
             lambda state: "finalize" if state.get("state_only") else "select_policy",
         )
-        builder.add_conditional_edges(
-            "select_policy",
-            lambda state: "safe_refusal" if state["decision"].safe_refusal else "retrieve_and_plan",
-        )
+        builder.add_conditional_edges("select_policy", self._route_after_policy)
         builder.add_conditional_edges(
             "retrieve_and_plan",
             lambda state: "render" if state.get("plan") is not None else "safe_refusal",
         )
+        builder.add_edge("build_revision", "validate_output")
         builder.add_edge("render", "validate_output")
         builder.add_conditional_edges("validate_output", self._route_after_validation)
         builder.add_edge("template_fallback", "validate_output")
@@ -148,6 +153,35 @@ class TutorAgentGraph:
             ),
         }
 
+    def _build_revision(self, state: TutorGraphState) -> dict:
+        generator = state.get("generator")
+        if generator is None:
+            return {
+                "revision_plan": None,
+                "error_code": "NO_VERIFIED_CONTENT",
+                **_step(state, "build_revision", "failed", "GENERATOR_UNAVAILABLE"),
+            }
+        plan = build_revision_plan(
+            state["learner_state"],
+            state["decision"],
+            state["goal"],
+            state["catalog"],
+            generator,
+            as_of=state["as_of"],
+            horizon_days=state.get("horizon_days", 14),
+            recently_used=recent_content_usage(state["events"], state["as_of"]),
+            policy_version=state["policy_version"],
+        )
+        return {
+            "revision_plan": plan,
+            **_step(
+                state,
+                "build_revision",
+                "passed" if plan else "failed",
+                None if plan else "NO_VERIFIED_CONTENT",
+            ),
+        }
+
     def _render(self, state: TutorGraphState) -> dict:
         result = self.renderer.render(state["plan"])
         return {
@@ -172,6 +206,20 @@ class TutorAgentGraph:
         return True
 
     def _validate_output(self, state: TutorGraphState) -> dict:
+        if state["operation"] == "dayn_revision":
+            plan = state.get("revision_plan")
+            if plan is None:
+                return {
+                    "validation_ok": False,
+                    "error_code": state.get("error_code") or "NO_VERIFIED_CONTENT",
+                    **_step(state, "validate_output", "failed", "NO_VERIFIED_CONTENT"),
+                }
+            ok, reason = validate_revision_plan(plan, state["catalog"].catalog)
+            return {
+                "validation_ok": ok,
+                "error_code": None if ok else reason,
+                **_step(state, "validate_output", "passed" if ok else "failed", reason),
+            }
         plan_valid, reason = validate_plan(state["plan"], state["catalog"].catalog)
         render_valid = bool(state.get("rendered")) and self._render_matches_plan(
             state["plan"], state["rendered"]
@@ -184,9 +232,19 @@ class TutorAgentGraph:
         }
 
     @staticmethod
+    def _route_after_policy(state: TutorGraphState) -> str:
+        if state["decision"].safe_refusal:
+            return "safe_refusal"
+        if state["operation"] == "dayn_revision":
+            return "build_revision"
+        return "retrieve_and_plan"
+
+    @staticmethod
     def _route_after_validation(state: TutorGraphState) -> str:
         if state.get("validation_ok"):
             return "finalize"
+        if state["operation"] == "dayn_revision":
+            return "safe_refusal"
         if not state.get("fallback_attempted"):
             return "template_fallback"
         return "safe_refusal"
@@ -217,7 +275,7 @@ class TutorAgentGraph:
     def run(
         self,
         *,
-        operation: Literal["day0_start", "day0_turn", "dayn_start", "dayn_turn"],
+        operation: Literal["day0_start", "day0_turn", "dayn_start", "dayn_turn", "dayn_revision"],
         events: list[LearnerEvent],
         as_of: datetime,
         goal: SessionGoal | None,
@@ -226,6 +284,8 @@ class TutorAgentGraph:
         day0: bool = False,
         state_only: bool = False,
         locked_decision: PolicyDecision | None = None,
+        generator: Any = None,
+        horizon_days: int = 14,
     ) -> GraphExecution:
         initial: TutorGraphState = {
             "operation": operation,
@@ -240,6 +300,8 @@ class TutorAgentGraph:
             "fallback_attempted": False,
             "validation_ok": True,
             "steps": [],
+            "generator": generator,
+            "horizon_days": horizon_days,
         }
         if goal is not None:
             initial["goal"] = goal
@@ -255,4 +317,5 @@ class TutorAgentGraph:
             validation_ok=output.get("validation_ok", True),
             error_code=output.get("error_code"),
             steps=tuple(output.get("steps", [])),
+            revision_plan=output.get("revision_plan"),
         )

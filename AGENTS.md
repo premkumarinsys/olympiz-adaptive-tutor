@@ -15,3 +15,9 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Preserve the visible hierarchy: compact header, left goal/memory rail, four-stage progress path, one active lesson task, and bottom session-summary band.
 - Student interaction remains primary; reviewer evidence opens through a compact decision-trace control.
 - The project includes a deterministic FastAPI backend in backend/; frontend source stays in src/.
+
+## Open Chat Tutor Direction
+
+- The teacher-authored class lesson is static and identical for every student.
+- Open chat supports student questions, exercise preparation, personalized problem sets, and revision using existing student memory.
+- Adapt explanations, scaffolding, difficulty, and revision priorities from observed learner evidence; behavior categories are revisable support strategies rather than permanent student labels.

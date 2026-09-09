@@ -1,3 +1,4 @@
+﻿import { OpenChatPage } from "./OpenChat";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -193,7 +194,7 @@ function Launcher() {
           </div>
         </section>
 
-        <section className="launcher-grid" aria-label="Demo journeys">
+        <section className="chat-entry"><Brain size={32}/><div><h2>Your open chat tutor</h2><p>Ask questions about the shared class lesson. Prepare, practice, and revise with support drawn from your learning memory.</p></div><Link to="/chat" className="primary-button">Open tutor <ArrowRight size={18}/></Link></section><section className="launcher-grid" aria-label="Demo journeys">
           {cards.map(({ to, icon: Icon, title, eyebrow, copy, cta }) => (
             <Link className="journey-card" to={to} key={to}>
               <span className="journey-icon"><Icon size={26} weight="regular" /></span>
@@ -399,10 +400,11 @@ function AnswerActivity({
   activity: Activity;
   submitting: boolean;
   feedback?: string;
-  onSubmit: (answer: string, confidence: ConfidenceValue) => void;
+  onSubmit: (answer: string, confidence: ConfidenceValue, reasoning: string) => void;
   onCounterexample?: () => void;
 }) {
   const [answer, setAnswer] = useState("");
+  const [reasoning, setReasoning] = useState("");
   const [confidence, setConfidence] = useState<ConfidenceValue | null>(null);
   const [validation, setValidation] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -422,7 +424,7 @@ function AnswerActivity({
       return;
     }
     setValidation("");
-    onSubmit(answer, confidence);
+    onSubmit(answer, confidence, reasoning);
   }
 
   return (
@@ -466,6 +468,17 @@ function AnswerActivity({
       {validation && <p className="field-error" role="alert"><WarningCircle size={18} />{validation}</p>}
       {feedback && <div className="feedback-message" role="status"><CheckCircle size={21} weight="fill" /><span>{feedback}</span></div>}
 
+      <label className="reasoning-field">
+        <span>How did you work it out? <small>Optional, but it helps me teach you better</small></span>
+        <textarea
+          value={reasoning}
+          onChange={(event) => setReasoning(event.target.value)}
+          placeholder="e.g. I found the net force first, then divided by the mass using F = ma"
+          rows={3}
+          maxLength={2000}
+          disabled={submitting || Boolean(feedback)}
+        />
+      </label>
       <div className="activity-actions">
         <button className="primary-button" type="submit" disabled={submitting || Boolean(feedback)}>
           {submitting ? <CircleNotch className="spin" size={20} /> : null}
@@ -581,7 +594,7 @@ function LessonWorkspace({
   const startedAt = useRef(performance.now());
   const pendingTurnId = useRef<string | null>(null);
 
-  async function submit(answer: string, confidence: ConfidenceValue) {
+  async function submit(answer: string, confidence: ConfidenceValue, reasoning = "") {
     setSubmitting(true);
     setError("");
     pendingTurnId.current ??= crypto.randomUUID();
@@ -593,6 +606,8 @@ function LessonWorkspace({
         confidence,
         elapsed_ms: Math.min(Math.round(performance.now() - startedAt.current), MAX_ELAPSED_MS),
         requested_hint_ids: counterexample ? ["counterexample_01"] : [],
+        reasoning_text: reasoning.trim() || null,
+        reasoning_prompted: true,
       }, demoActivities);
       pendingTurnId.current = null;
       setTurnResult(result);
@@ -1028,7 +1043,7 @@ function InlineError({ message, actionLabel, onAction }: { message: string; acti
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Launcher />} />
+      <Route path="/" element={<Launcher />} /><Route path="/chat" element={<OpenChatPage />} />
       <Route path="/day0" element={<Navigate to="/day0/setup" replace />} />
       <Route path="/day0/setup" element={<Day0SetupPage />} />
       <Route path="/day0/:sessionId/diagnostic" element={<Day0DiagnosticPage />} />

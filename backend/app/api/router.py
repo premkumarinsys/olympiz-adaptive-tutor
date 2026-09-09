@@ -12,6 +12,8 @@ from app.api.schemas import (
     TurnResponse,
 )
 from app.services.runtime import TutorRuntime
+from app.api.chat_schemas import ChatMessageRequest, ChatStartRequest
+from app.services.chat_tutor import ChatTutor
 
 router = APIRouter()
 
@@ -76,3 +78,25 @@ def health(runtime: Runtime):
         "policy_version": runtime.settings.policy_version,
         "catalog_version": runtime.catalog.catalog.catalog_version,
     }
+
+
+
+def get_chat(runtime: TutorRuntime) -> ChatTutor:
+    if not hasattr(runtime, "chat_tutor"):
+        runtime.chat_tutor = ChatTutor(runtime)
+    return runtime.chat_tutor
+
+
+@router.post("/api/v1/chat/sessions")
+def start_chat(payload: ChatStartRequest, runtime: Runtime):
+    return get_chat(runtime).start(payload)
+
+
+@router.get("/api/v1/chat/sessions/{session_id}")
+def get_chat_session(session_id: str, runtime: Runtime):
+    return get_chat(runtime).get(session_id)
+
+
+@router.post("/api/v1/chat/sessions/{session_id}/messages")
+def send_chat_message(session_id: str, payload: ChatMessageRequest, runtime: Runtime):
+    return get_chat(runtime).send(session_id, payload)

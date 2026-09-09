@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 
 from app.core.canonical import content_hash
@@ -19,6 +19,7 @@ from app.domain.models import (
     PaceState,
     PersistedPolicy,
     PolicyApplied,
+    ReasoningClassified,
     RepresentationState,
     ResponseGraded,
     ScaffoldingEstimate,
@@ -39,6 +40,40 @@ ASSISTANCE_CREDIT = {
 
 ZERO_RELIABILITY_FLAGS = {"interrupted", "timed_out", "answer_exposed", "duplicate_retry"}
 BLOCKING_MISCONCEPTIONS = {"adds_forces_as_scalars", "balanced_forces_absent"}
+
+# Reasoning can only ever reduce demonstrated mastery. Nothing here raises alpha, so a
+# learner cannot talk their way toward the Challenge gate.
+REASONING_CREDIT_NOT_PROMPTED = 1.0
+REASONING_CREDIT_DECLINED = 0.85
+REASONING_CREDIT_ERROR = 1.0
+REASONING_CREDIT_UNCLASSIFIED = 0.55
+REASONING_CREDIT_MISCONCEPTION = 0.0
+REASONING_COVERAGE_CREDIT = ((0.99, 1.0), (0.50, 0.70), (0.0, 0.55))
+
+
+def _reasoning_credit(
+    event: ResponseGraded, reasoning: ReasoningClassified | None
+) -> float:
+    """Multiplier on the demonstration score, in [0, 1]."""
+    if not event.reasoning_prompted:
+        return REASONING_CREDIT_NOT_PROMPTED
+    if reasoning is None or not reasoning.reasoning_text.strip():
+        return REASONING_CREDIT_DECLINED
+    if reasoning.outcome == "classifier_error":
+        # A provider outage is our fault, never the learner's.
+        return REASONING_CREDIT_ERROR
+    if reasoning.misconceptions_exhibited:
+        return REASONING_CREDIT_MISCONCEPTION
+    if reasoning.outcome == "unclassified":
+        return REASONING_CREDIT_UNCLASSIFIED
+    total = reasoning.claims_available
+    if not total:
+        return REASONING_CREDIT_UNCLASSIFIED
+    coverage = len(reasoning.claims_invoked) / total
+    for threshold, credit in REASONING_COVERAGE_CREDIT:
+        if coverage >= threshold:
+            return credit
+    return REASONING_CREDIT_UNCLASSIFIED
 
 
 def _reliability(event: ResponseGraded) -> float:
@@ -99,11 +134,16 @@ def _noisy_sessions(events: Sequence[LearnerEvent]) -> set[str]:
 
 
 def _mastery(
-    attempts: list[ResponseGraded], noisy: set[str], as_of: datetime
+    attempts: list[ResponseGraded],
+    noisy: set[str],
+    as_of: datetime,
+    reasoning_by_turn: Mapping[str, ReasoningClassified] | None = None,
 ) -> MasteryEstimate:
+    reasoning_by_turn = reasoning_by_turn or {}
     grouped: dict[str, list[tuple[ResponseGraded, float, float]]] = defaultdict(list)
     for event in attempts:
-        z = event.first_attempt_score * ASSISTANCE_CREDIT[event.support_used]
+        credit = _reasoning_credit(event, reasoning_by_turn.get(event.turn_id))
+        z = event.first_attempt_score * ASSISTANCE_CREDIT[event.support_used] * credit
         weight = _reliability(event) * _difficulty_multiplier(event, z) * _decay(
             event.occurred_at, as_of
         )
@@ -166,17 +206,23 @@ def _scaffolding(attempts: list[ResponseGraded], as_of: datetime) -> Scaffolding
     )
 
 
-def _misconceptions(attempts: list[ResponseGraded]) -> tuple[MisconceptionState, ...]:
+def _misconceptions(
+    attempts: list[ResponseGraded], stated: set[str] | None = None
+) -> tuple[MisconceptionState, ...]:
+    stated = stated or set()
     by_tag: dict[str, list[ResponseGraded]] = defaultdict(list)
     for event in attempts:
         if _reliability(event) >= 0.8:
             for tag in event.error_tags:
                 by_tag[tag].append(event)
     states: list[MisconceptionState] = []
-    for tag, evidence in sorted(by_tag.items()):
+    for tag in sorted(set(by_tag) | stated):
+        evidence = by_tag.get(tag, [])
         distinct_items = {event.content_id for event in evidence}
         independent = any(event.support_used == SupportUsed.NONE for event in evidence)
-        confirmed = len(distinct_items) >= 2 and independent
+        # The learner's own words are direct attribution rather than inference from a
+        # wrong number, so a single statement confirms.
+        confirmed = tag in stated or (len(distinct_items) >= 2 and independent)
         status = "blocking" if confirmed and tag in BLOCKING_MISCONCEPTIONS else (
             "confirmed" if confirmed else "candidate"
         )
@@ -188,6 +234,25 @@ def _misconceptions(attempts: list[ResponseGraded]) -> tuple[MisconceptionState,
             )
         )
     return tuple(states)
+
+
+def _computation_slips(
+    attempts: list[ResponseGraded],
+    reasoning_by_turn: Mapping[str, ReasoningClassified],
+) -> int:
+    """Wrong answer, right method, per the learner's own explanation."""
+    slips = 0
+    for event in attempts:
+        if event.first_attempt_score >= 0.8:
+            continue
+        reasoning = reasoning_by_turn.get(event.turn_id)
+        if reasoning is None or reasoning.outcome != "classified":
+            continue
+        if reasoning.misconceptions_exhibited or not reasoning.claims_available:
+            continue
+        if len(reasoning.claims_invoked) / reasoning.claims_available >= 0.99:
+            slips += 1
+    return slips
 
 
 def _calibration(
@@ -302,14 +367,29 @@ def reduce_events(
             preferences[event.preference] = event.value
 
     attempts = [event for event in active if isinstance(event, ResponseGraded)]
+    reasoning_by_turn = {
+        event.turn_id: event
+        for event in active
+        if isinstance(event, ReasoningClassified)
+    }
+    # A misconception the learner stated in their own words is direct attribution, not
+    # inference from a wrong number, so it confirms without waiting for repetition.
+    stated_by_concept: dict[str, set[str]] = defaultdict(set)
+    concept_by_turn = {event.turn_id: event.concept_id for event in attempts}
+    for turn_id, event in reasoning_by_turn.items():
+        concept_id = concept_by_turn.get(turn_id)
+        if concept_id:
+            stated_by_concept[concept_id].update(event.misconceptions_exhibited)
+
     by_concept: dict[str, list[ResponseGraded]] = defaultdict(list)
     for event in attempts:
         by_concept[event.concept_id].append(event)
     concepts = {
         concept_id: ConceptState(
-            mastery=_mastery(values, noisy, now),
+            mastery=_mastery(values, noisy, now, reasoning_by_turn),
             scaffolding=_scaffolding(values, now),
-            misconceptions=_misconceptions(values),
+            misconceptions=_misconceptions(values, stated_by_concept.get(concept_id)),
+            computation_slips=_computation_slips(values, reasoning_by_turn),
         )
         for concept_id, values in sorted(by_concept.items())
     }
