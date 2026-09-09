@@ -59,6 +59,19 @@ REVISION_STOP_CONDITIONS = (
     "AS_OF_BEFORE_MEMORY",
 )
 
+# Ordered by how well each pedagogy suits independent revision practice. The catalog
+# holds exactly one item per pedagogy, so a single hardcoded kind cannot fill a set.
+FALLBACK_PEDAGOGIES = (
+    "independent_check",
+    "guided_item",
+    "fading_hint_item",
+    "delayed_hint",
+    "transfer_problem",
+    "extension",
+    "confidence_activity",
+    "prerequisite_check",
+)
+
 MINUTES_PER_ITEM = 4
 
 
@@ -194,26 +207,27 @@ def _catalog_item(
     concept_id: str,
     goal: SessionGoal,
     band: tuple[int, int],
-    pedagogy: str,
+    pedagogies: tuple[str, ...],
     misconception: str | None,
     excluded: tuple[str, ...],
     order: int,
     hint_limit: int,
 ) -> ExerciseItem | None:
-    selection = catalog.retrieve(
-        ContentQuery(
-            concept_id=concept_id,
-            pedagogy=pedagogy,
-            exam_goal=goal.exam_goal,
-            difficulty=(band[0] + band[1]) // 2,
-            misconception_tags=(misconception,) if misconception else (),
-            excluded_content_ids=excluded,
+    for pedagogy in pedagogies:
+        selection = catalog.retrieve(
+            ContentQuery(
+                concept_id=concept_id,
+                pedagogy=pedagogy,
+                exam_goal=goal.exam_goal,
+                difficulty=(band[0] + band[1]) // 2,
+                misconception_tags=(misconception,) if misconception else (),
+                excluded_content_ids=excluded,
+            )
         )
-    )
-    item = selection.selected
-    if item is None or item.answer_key is None:
-        return None
-    return _exercise_item(item, order, hint_limit, derived_from=None)
+        item = selection.selected
+        if item is not None and item.answer_key is not None:
+            return _exercise_item(item, order, hint_limit, derived_from=None)
+    return None
 
 
 def build_revision_plan(
@@ -257,6 +271,7 @@ def build_revision_plan(
     used_signatures: list[str] = []
     providers: set[str] = set()
     items: list[ExerciseItem] = []
+    placed: list[str] = []
     probe_placed = False
 
     fill_order = [ranked[index % len(ranked)] for index in range(item_target)]
@@ -266,10 +281,12 @@ def build_revision_plan(
         if misconception and not probe_placed:
             probe = _catalog_item(
                 catalog, concept_id, goal, _slot_band("misconception_repair", base_band),
-                "misconception_probe", misconception, excluded, order, hint_limit,
+                ("misconception_probe",), misconception, excluded + tuple(placed),
+                order, hint_limit,
             )
             if probe is not None:
                 items.append(probe)
+                placed.append(probe.content_ref.content_id)
                 probe_placed = True
                 continue
 
@@ -280,20 +297,24 @@ def build_revision_plan(
         generated = result.get("item")
         if generated is not None and generated.answer_key is not None:
             used_signatures.append(str(result["signature"]))
-            items.append(
-                _exercise_item(
-                    generated, order, hint_limit,
-                    derived_from=str(result.get("template_id")),
-                )
+            generated_item = _exercise_item(
+                generated, order, hint_limit,
+                derived_from=str(result.get("template_id")),
             )
+            items.append(generated_item)
+            placed.append(generated_item.content_ref.content_id)
             continue
 
         fallback = _catalog_item(
-            catalog, concept_id, goal, base_band, "independent_check",
-            None, excluded, order, hint_limit,
+            catalog, concept_id, goal, base_band, FALLBACK_PEDAGOGIES,
+            None, excluded + tuple(placed), order, hint_limit,
         )
         if fallback is not None:
             items.append(fallback)
+            placed.append(fallback.content_ref.content_id)
+
+    if not items:
+        return None
 
     exercise_set = ExerciseSet(
         items=tuple(items),

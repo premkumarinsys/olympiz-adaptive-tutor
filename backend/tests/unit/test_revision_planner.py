@@ -175,3 +175,17 @@ def test_recent_content_usage_reports_days_since_presentation(fixtures):
     usage = recent_content_usage(list(fixtures["kabir"].events), AS_OF)
     assert usage
     assert all(days >= 0 for days in usage.values())
+
+
+def test_exercise_items_are_distinct(fixtures, catalog, generator):
+    for fixture_id in ("rohan", "meera", "kabir", "tara", "zoya", "dev"):
+        plan = _plan(fixtures, catalog, generator, fixture_id)
+        ids = [item.content_ref.content_id for item in plan.exercise_set.items]
+        assert len(ids) == len(set(ids)), f"{fixture_id} repeats an item: {ids}"
+
+
+def test_every_learner_with_evidence_gets_a_usable_set(fixtures, catalog, generator):
+    for fixture_id in ("asha", "rohan", "meera", "kabir", "tara", "zoya", "dev"):
+        plan = _plan(fixtures, catalog, generator, fixture_id)
+        assert plan is not None, f"{fixture_id} produced no plan"
+        assert plan.exercise_set.items, f"{fixture_id} produced an empty exercise set"
